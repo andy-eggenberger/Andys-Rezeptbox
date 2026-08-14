@@ -758,3 +758,189 @@ kbd {
   font-size: 3rem;
   background: linear-gradient(135deg, #e7ece8, #f4efe6);
 }
+
+
+/* V3.6 – verbesserte iPhone-/Mobile-Darstellung */
+@media (max-width: 700px) {
+  html, body {
+    overflow-x: hidden;
+  }
+
+  body {
+    min-width: 0;
+  }
+
+  .topbar,
+  .hero,
+  main,
+  .container,
+  .section,
+  .overview-card,
+  .quick-actions,
+  .search-row,
+  .category-grid,
+  .recipe-grid {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .hero {
+    padding: 18px 16px 22px;
+  }
+
+  .hero h1 {
+    font-size: clamp(2rem, 10vw, 3rem);
+    line-height: 1.03;
+    overflow-wrap: anywhere;
+  }
+
+  .hero p {
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+
+  main,
+  .container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* Überblick: Text oben, Statistik darunter in 3 schmalen Feldern */
+  .overview-card {
+    display: block;
+    padding: 16px;
+  }
+
+  .overview-stats,
+  .stats-grid,
+  .stat-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    width: 100%;
+    margin-top: 14px;
+  }
+
+  .stat-card,
+  .stat {
+    min-width: 0 !important;
+    width: auto !important;
+    padding: 12px 10px !important;
+  }
+
+  /* Schnellzugriff sauber in zwei Spalten */
+  .quick-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .quick-action,
+  .action-card,
+  .quick-actions > button {
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 14px 12px !important;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .quick-action strong,
+  .action-card strong,
+  .quick-actions strong,
+  .quick-action span,
+  .action-card span,
+  .quick-actions span {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  /* Falls Icons + Text per Flex laufen */
+  .quick-action > *,
+  .action-card > * {
+    min-width: 0;
+  }
+
+  /* Suche */
+  .search-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  .search-row .search-wrap,
+  .search-row .search-box,
+  .search-row input {
+    grid-column: 1 / -1;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .search-row button {
+    width: 100%;
+  }
+
+  /* Kategorien */
+  .section-head {
+    align-items: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  #addCategoryBtn {
+    width: 100% !important;
+  }
+
+  .category-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Rezeptkarten */
+  .recipe-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Dialoge */
+  dialog {
+    width: calc(100% - 16px) !important;
+    max-width: calc(100% - 16px) !important;
+    max-height: calc(100dvh - 16px);
+    margin: 8px auto;
+  }
+
+  dialog form,
+  .dialog-body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Floating Plus nicht zu gross */
+  .fab,
+  .mobile-fab {
+    right: 14px !important;
+    bottom: 14px !important;
+  }
+}
+
+/* Sehr schmale iPhones */
+@media (max-width: 390px) {
+  .quick-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  .overview-stats,
+  .stats-grid,
+  .stat-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
