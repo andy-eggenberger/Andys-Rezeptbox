@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#6a7f71" />
+  <title>Andys Rezeptbox</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-copy">
+      <span class="eyebrow">Deine persönliche Rezeptsammlung</span>
+      <h1>Andys Rezeptbox</h1>
+      <p>Einfach speichern, schnell finden und auf dem iPhone bequem nutzen.</p>
+    </div>
+    <div class="header-buttons">
+      <button id="importRecipeBtn" class="secondary main-add-btn">📋 Importieren</button>
+      <button id="addRecipeBtn" class="primary main-add-btn">＋ Neues Rezept</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero card">
+      <div class="hero-text">
+        <span class="eyebrow">Schnellzugriff</span>
+        <h2>Alles Wichtige auf einen Blick</h2>
+        <p>Rezepte erfassen, Favoriten sammeln, sichern und später auf jedem Gerät wieder weiterarbeiten.</p>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-card">
+          <span class="stat-label">Rezepte</span>
+          <strong id="statTotal">0</strong>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Favoriten</span>
+          <strong id="statFavorites">0</strong>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Kategorien</span>
+          <strong id="statCategories">9</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="quick-actions">
+      <button id="quickAddBtn" class="action-card action-primary">
+        <span class="action-icon">＋</span>
+        <span class="action-text"><strong>Neues Rezept</strong><small>Direkt anlegen</small></span>
+      </button>
+      <button id="quickFavoritesBtn" class="action-card">
+        <span class="action-icon">★</span>
+        <span class="action-text"><strong>Favoriten</strong><small>Lieblingsrezepte</small></span>
+      </button>
+      <button id="quickImportRecipeBtn" class="action-card">
+        <span class="action-icon">📋</span>
+        <span class="action-text"><strong>Rezept importieren</strong><small>Text & Bilder übernehmen</small></span>
+      </button>
+      <button id="quickExportBtn" class="action-card">
+        <span class="action-icon">💾</span>
+        <span class="action-text"><strong>Backup</strong><small>Sicherung speichern</small></span>
+      </button>
+      <button id="quickImportBtn" class="action-card">
+        <span class="action-icon">📥</span>
+        <span class="action-text"><strong>Wiederherstellen</strong><small>Sicherung laden</small></span>
+      </button>
+    </section>
+
+    <section class="toolbar card">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input id="searchInput" type="search" placeholder="Rezepte, Zutaten oder Notizen suchen …" />
+      </div>
+      <div class="toolbar-actions">
+        <button id="favoritesBtn" class="secondary">★ Favoriten</button>
+        <button id="showAllBtn" class="secondary active">Alle</button>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <h2>Kategorien</h2>
+          <span>Zum Filtern antippen</span>
+        </div>
+        <button id="addCategoryBtn" class="secondary">＋ Kategorie erstellen</button>
+      </div>
+      <div id="categoryGrid" class="category-grid"></div>
+    </section>
+
+    <section class="recipes-section">
+      <div class="section-head">
+        <div>
+          <h2 id="recipeListTitle">Alle Rezepte</h2>
+          <span class="section-sub">Deine gespeicherten Rezepte als übersichtliche Karten</span>
+        </div>
+        <span id="recipeCount"></span>
+      </div>
+      <div id="recipeGrid" class="recipe-grid"></div>
+      <div id="emptyState" class="empty-state hidden card">
+        <div class="empty-icon">🍲</div>
+        <h3>Noch keine passenden Rezepte vorhanden</h3>
+        <p>Lege dein erstes Rezept an oder ändere Suche und Filter.</p>
+        <button class="primary" id="emptyAddBtn">Erstes Rezept anlegen</button>
+      </div>
+    </section>
+
+    <section class="backup card">
+      <div class="section-head compact-head">
+        <div>
+          <h2>Sicherung</h2>
+          <span class="section-sub">Wichtig bei Gerätewechsel oder wenn Browserdaten gelöscht werden.</span>
+        </div>
+      </div>
+      <div class="backup-box">
+        <p>Deine Rezepte werden aktuell lokal im Browser gespeichert. Sichere sie deshalb regelmässig als Datei.</p>
+        <div class="backup-actions">
+          <button id="exportBtn" class="secondary">Sicherung herunterladen</button>
+          <button id="mergeImportBtn" class="secondary">➕ Sicherung hinzufügen</button>
+          <button id="importBtn" class="secondary">Sicherung wiederherstellen</button>
+          <input id="importInput" type="file" accept="application/json" hidden />
+          <input id="mergeImportInput" type="file" accept="application/json" hidden />
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <button id="mobileAddBtn" class="floating-add" aria-label="Neues Rezept anlegen">＋</button>
+
+  <dialog id="categoryDialog" class="small-dialog">
+    <form id="categoryForm" method="dialog">
+      <div class="dialog-head">
+        <h2>Neue Kategorie</h2>
+        <button type="button" id="closeCategoryDialogBtn" class="icon-btn" aria-label="Schliessen">✕</button>
+      </div>
+
+      <label>Kategoriename
+        <input id="newCategoryInput" required maxlength="50" placeholder="z. B. Grill, Pasta, Weihnachten …" />
+      </label>
+
+      <label>Symbol
+        <select id="newCategoryEmoji">
+          <option value="🍽️">🍽️ Allgemein</option>
+          <option value="🍝">🍝 Pasta</option>
+          <option value="🍕">🍕 Pizza</option>
+          <option value="🥘">🥘 Eintopf</option>
+          <option value="🥪">🥪 Snack</option>
+          <option value="🥦">🥦 Gemüse</option>
+          <option value="🔥">🔥 Grill</option>
+          <option value="🎄">🎄 Weihnachten</option>
+          <option value="⭐">⭐ Spezial</option>
+        </select>
+      </label>
+
+      <div class="dialog-actions">
+        <span class="spacer"></span>
+        <button type="button" id="cancelCategoryBtn" class="secondary">Abbrechen</button>
+        <button type="submit" class="primary">Kategorie speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="recipeDialog">
+    <form id="recipeForm" method="dialog">
+      <div class="dialog-head">
+        <h2 id="dialogTitle">Neues Rezept</h2>
+        <button type="button" id="closeDialogBtn" class="icon-btn" aria-label="Schliessen">✕</button>
+      </div>
+
+      <input type="hidden" id="recipeId" />
+
+      <label>Titel<input id="titleInput" required maxlength="120" /></label>
+      <label>Kategorie<select id="categoryInput" required></select></label>
+      <div class="image-field">
+        <label class="field-label">Bilder</label>
+        <div id="imageDropZone" class="image-drop-zone" tabindex="0">
+          <div class="image-drop-icon">📷</div>
+          <strong>Bild oder Bilddatei hier hineinziehen</strong>
+          <span>oder mit <kbd>Strg</kbd> + <kbd>V</kbd> aus der Zwischenablage einfügen</span>
+          <button type="button" id="chooseImagesBtn" class="secondary">📁 Bilder auswählen</button>
+          <input id="imageInput" type="file" accept="image/*" multiple hidden />
+        </div>
+        <p class="image-help">Das erste Bild wird als Titelbild verwendet. Zum Tauschen einfach die Bilder mit der Maus ziehen. Bilder kannst du danach mit der Maus in die gewünschte Reihenfolge ziehen.</p>
+        <div id="imagePreviewGrid" class="image-preview-grid hidden"></div>
+        <button type="button" id="removeImageBtn" class="text-btn hidden">Alle Bilder entfernen</button>
+      </div>
+
+      <div class="video-field">
+        <label class="field-label">Video</label>
+        <div class="video-box">
+          <label>Video-Link
+            <input id="videoUrlInput" type="url" placeholder="Facebook-, YouTube- oder direkter Video-Link …" />
+          </label>
+          <div class="video-or">oder</div>
+          <button type="button" id="chooseVideoBtn" class="secondary">🎬 Videodatei auswählen</button>
+          <input id="videoFileInput" type="file" accept="video/mp4,video/webm,video/quicktime" hidden />
+          <div id="videoPreviewBox" class="video-preview hidden"></div>
+          <button type="button" id="removeVideoBtn" class="text-btn hidden">Video entfernen</button>
+          <p class="image-help">Kleine Videodateien können direkt gespeichert werden. Bei grösseren Videos verwendest du am besten den Original-Link.</p>
+        </div>
+      </div>
+
+      <label>Zutaten<textarea id="ingredientsInput" rows="8" placeholder="z. B. 500 g Kartoffeln&#10;2 Eier&#10;Salz, Pfeffer"></textarea></label>
+      <label>Zubereitung<textarea id="instructionsInput" rows="10" placeholder="Schritt für Schritt …"></textarea></label>
+      <label>Eigene Notizen<textarea id="notesInput" rows="5" placeholder="Was möchte ich mir merken?"></textarea></label>
+      <label>Original-Link<input id="sourceInput" type="url" placeholder="https://…" /></label>
+      <label class="favorite-check"><input id="favoriteInput" type="checkbox" /> <span>Als Favorit markieren</span></label>
+
+      <div class="dialog-actions">
+        <button type="button" id="deleteBtn" class="danger hidden">Rezept löschen</button>
+        <span class="spacer"></span>
+        <button type="button" id="cancelBtn" class="secondary">Abbrechen</button>
+        <button type="submit" class="primary">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+
+  <dialog id="importDialog" class="import-dialog">
+    <form id="importForm" method="dialog">
+      <div class="dialog-head">
+        <div>
+          <span class="eyebrow">Facebook, Website, WhatsApp …</span>
+          <h2>Rezept importieren</h2>
+        </div>
+        <button type="button" id="closeImportDialogBtn" class="icon-btn" aria-label="Schliessen">✕</button>
+      </div>
+
+      <div class="import-help">
+        <strong>So geht’s:</strong> Kopiere den ganzen Rezepttext und füge ihn unten ein. Den Link kannst du separat einfügen. Bilder kannst du auswählen, hineinziehen oder direkt aus der Zwischenablage einfügen. Videos kannst du als Link oder Videodatei übernehmen.
+      </div>
+
+      <label>Kompletter Rezepttext
+        <textarea id="importTextInput" rows="13" placeholder="Hier den ganzen Facebook-Beitrag oder Rezepttext einfügen …"></textarea>
+      </label>
+      <label>Quelle / Facebook-Link
+        <input id="importSourceInput" type="url" placeholder="https://www.facebook.com/…" />
+      </label>
+      <label>Bilder auswählen
+        <input id="importImagesInput" type="file" accept="image/*" multiple />
+      </label>
+      <div id="importDropZone" class="import-drop-zone" tabindex="0">
+        <strong>📷 Bilder direkt von einer Webseite hier hineinziehen oder mit Strg+V einfügen</strong>
+        <span>Das erste Bild wird als Titelbild verwendet.</span>
+      </div>
+      <div id="importImagePreviewGrid" class="image-preview-grid hidden"></div>
+
+      <div class="video-field import-video-field">
+        <label class="field-label">Video übernehmen</label>
+        <label>Video-Link
+          <input id="importVideoUrlInput" type="url" placeholder="Facebook-, YouTube- oder direkter Video-Link …" />
+        </label>
+        <button type="button" id="chooseImportVideoBtn" class="secondary">🎬 Videodatei auswählen</button>
+        <input id="importVideoFileInput" type="file" accept="video/mp4,video/webm,video/quicktime" hidden />
+        <div id="importVideoPreviewBox" class="video-preview hidden"></div>
+        <button type="button" id="removeImportVideoBtn" class="text-btn hidden">Video entfernen</button>
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" id="clearImportBtn" class="secondary">Leeren</button>
+        <span class="spacer"></span>
+        <button type="button" id="cancelImportBtn" class="secondary">Abbrechen</button>
+        <button type="submit" class="primary">Übernehmen & prüfen</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="viewDialog" class="view-dialog">
+    <article id="recipeView"></article>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
