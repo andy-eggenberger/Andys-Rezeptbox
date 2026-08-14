@@ -72,3 +72,5 @@ V3.4:
 - Vorhandene Rezepte aus dem alten localStorage werden beim ersten Start automatisch übernommen.
 - Nach erfolgreichem Speichern wird der alte grosse localStorage-Rezeptblock entfernt.
 - Backup / Sicherung hinzufügen / Wiederherstellen bleiben erhalten.
+
+V3.5: Eigenes App-/iPhone-Icon integriert.

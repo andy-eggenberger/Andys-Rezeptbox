@@ -1,9 +1,21 @@
 {
-  "name": "Andys Rezeptbox",
+  "name": "Andy`s Rezeptbox",
   "short_name": "Rezeptbox",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f6f2ea",
   "theme_color": "#f4efe6",
-  "lang": "de-CH"
+  "lang": "de-CH",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
