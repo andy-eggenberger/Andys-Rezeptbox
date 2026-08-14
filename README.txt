@@ -76,3 +76,10 @@ V3.4:
 V3.5: Eigenes App-/iPhone-Icon integriert.
 
 V3.6: Mobile/iPhone-Layout verbessert: keine abgeschnittenen Schnellzugriff-Karten, saubere Statistik- und Kategorien-Darstellung.
+
+V3.7:
+- iPhone-Statistik kompakt in 3 Feldern nebeneinander.
+- Schnellzugriff auf kleinen Displays sauberer und mit kleinerer Schrift.
+- Kategorien auf dem iPhone zweispaltig.
+- Schwebender Plus-Button auf dem iPhone ausgeblendet.
+- PC-Darstellung bleibt unverändert.

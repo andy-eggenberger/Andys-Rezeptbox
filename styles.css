@@ -944,3 +944,109 @@ kbd {
     grid-template-columns: 1fr !important;
   }
 }
+
+
+/* V3.7 – kompaktere iPhone-Ansicht */
+@media (max-width: 700px) {
+
+  /* Statistik kompakt: 3 Felder nebeneinander */
+  .overview-stats,
+  .stats-grid,
+  .stat-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .stat-card,
+  .stat {
+    padding: 10px 8px !important;
+    min-height: 92px;
+  }
+
+  .stat-card span,
+  .stat span {
+    font-size: .78rem !important;
+  }
+
+  .stat-card strong,
+  .stat strong {
+    font-size: 1.45rem !important;
+  }
+
+  /* Schnellzugriff sauber und kompakt */
+  .quick-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .quick-action,
+  .action-card,
+  .quick-actions > button {
+    min-height: 112px;
+    padding: 12px 10px !important;
+  }
+
+  .quick-action strong,
+  .action-card strong,
+  .quick-actions strong {
+    font-size: .95rem !important;
+    line-height: 1.15 !important;
+    color: var(--text) !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    hyphens: auto;
+  }
+
+  .quick-action span,
+  .action-card span,
+  .quick-actions span {
+    font-size: .82rem !important;
+    line-height: 1.25 !important;
+    color: var(--muted) !important;
+  }
+
+  /* Kategorien: 2 nebeneinander */
+  .category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .category-card {
+    min-width: 0 !important;
+    padding: 12px !important;
+    min-height: 120px;
+  }
+
+  .category-card strong,
+  .category-card .category-name {
+    font-size: .95rem !important;
+    line-height: 1.15 !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  .category-card .category-count,
+  .category-card small {
+    font-size: .78rem !important;
+  }
+
+  /* Schwebendes Plus auf dem iPhone ausblenden */
+  .fab,
+  .mobile-fab,
+  [class*="floating"][class*="add"],
+  [class*="fab"] {
+    display: none !important;
+  }
+}
+
+/* Sehr schmale iPhones: Kategorien bleiben 2-spaltig, Schnellzugriff notfalls 1-spaltig */
+@media (max-width: 360px) {
+  .quick-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  .category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
