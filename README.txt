@@ -97,3 +97,17 @@ V3.9:
 - "Wiederherstellen" heisst jetzt "Komplette Sicherung ersetzen".
 - "Sicherung hinzufügen" heisst jetzt "Sicherung zusätzlich einlesen".
 - Im Sicherungsbereich wird der Unterschied der drei Funktionen kurz erklärt.
+
+V3.10:
+- Sicherungsbeschriftungen überall vereinheitlicht.
+- Schnellzugriff oben: "Sicherung herunterladen" und "Komplette Sicherung ersetzen".
+- Sicherungsbereich unten: "Sicherung herunterladen", "Sicherung zusätzlich einlesen", "Komplette Sicherung ersetzen".
+- Funktionen unverändert; nur die missverständlichen Beschriftungen aus V3.9 korrigiert.
+
+V3.11:
+- Duplikat-Schutz beim Speichern neuer/importierter Rezepte.
+- Identische Rezepte werden nicht nochmals gespeichert.
+- "Sicherung zusätzlich einlesen" überspringt bereits vorhandene Dubletten.
+- "Komplette Sicherung ersetzen" entfernt Dubletten innerhalb der Sicherungsdatei automatisch.
+- Nach der Wiederherstellung wird angezeigt, wie viele Dubletten übersprungen wurden.
+- Service-Worker-Cache aktualisiert, damit die neue Version auf PC/iPhone zuverlässig geladen wird.

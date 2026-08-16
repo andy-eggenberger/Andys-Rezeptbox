@@ -1242,6 +1242,21 @@ el('recipeForm').addEventListener('submit', e => {
   const i = recipes.findIndex(r => r.id === id);
   const previous = i >= 0 ? {...recipes[i]} : null;
 
+  // Duplikat-Schutz für neu angelegte und importierte Rezepte.
+  // Beim Bearbeiten eines bestehenden Rezepts wird der eigene Datensatz ignoriert.
+  const fingerprint = normalizedRecipeFingerprint(data);
+  const duplicate = recipes.find(r =>
+    r.id !== id && normalizedRecipeFingerprint(r) === fingerprint
+  );
+
+  if (duplicate) {
+    alert(
+      `Dieses Rezept ist bereits vorhanden:\n\n„${duplicate.title}“\n\n` +
+      'Es wurde kein zweiter Eintrag gespeichert.'
+    );
+    return;
+  }
+
   if (i >= 0) recipes[i] = {...recipes[i], ...data};
   else recipes.push(data);
 
@@ -1455,14 +1470,53 @@ el('showAllBtn').onclick = () => { favoritesOnly = false; currentCategory = null
 function triggerImport(){ el('importInput').click(); }
 function triggerExport(){ el('exportBtn').click(); }
 
+function normalizeFingerprintText(value){
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+}
+
 function normalizedRecipeFingerprint(recipe){
   const r = normalizeRecipe(recipe);
+  // Kategorie und ID werden bewusst NICHT berücksichtigt:
+  // Dasselbe Rezept soll auch dann als Duplikat erkannt werden,
+  // wenn es später einer anderen Kategorie zugeordnet wurde.
   return [
-    (r.title || '').trim().toLowerCase(),
-    (r.category || '').trim().toLowerCase(),
-    (r.ingredients || '').trim().toLowerCase().replace(/\s+/g,' '),
-    (r.instructions || '').trim().toLowerCase().replace(/\s+/g,' ')
+    normalizeFingerprintText(r.title),
+    normalizeFingerprintText(r.ingredients),
+    normalizeFingerprintText(r.instructions),
+    normalizeFingerprintText(r.source)
   ].join('||');
+}
+
+function dedupeRecipeList(incomingRecipes){
+  if (!Array.isArray(incomingRecipes)) return {recipes:[], skipped:0};
+
+  const seen = new Set();
+  const cleaned = [];
+  let skipped = 0;
+
+  for (const raw of incomingRecipes) {
+    const recipe = normalizeRecipe(raw);
+    const fingerprint = normalizedRecipeFingerprint(recipe);
+
+    if (!recipe.title || seen.has(fingerprint)) {
+      skipped++;
+      continue;
+    }
+
+    // Falls innerhalb einer Sicherung zwei verschiedene Rezepte dieselbe ID haben,
+    // bekommt der spätere Eintrag eine neue ID.
+    if (!recipe.id || cleaned.some(r => r.id === recipe.id)) {
+      recipe.id = uid();
+    }
+
+    seen.add(fingerprint);
+    cleaned.push(recipe);
+  }
+
+  return {recipes: cleaned, skipped};
 }
 
 function mergeCustomCategories(incoming){
@@ -1525,7 +1579,7 @@ function mergeRecipesFromBackup(incomingRecipes){
 el('exportBtn').onclick = () => {
   const payload = JSON.stringify({
     app:'Andys Rezeptbox',
-    version:3.9,
+    version:3.11,
     exportedAt:new Date().toISOString(),
     recipes,
     customCategories
@@ -1594,7 +1648,8 @@ el('importInput').addEventListener('change', async e => {
     const data = JSON.parse(await file.text());
     if (!Array.isArray(data.recipes)) throw new Error('Ungültige Sicherung');
     if (confirm(`Sicherung mit ${data.recipes.length} Rezepten wiederherstellen? Die aktuellen Rezepte werden ersetzt.`)) {
-      recipes = data.recipes.map(normalizeRecipe);
+      const cleaned = dedupeRecipeList(data.recipes);
+      recipes = cleaned.recipes;
       customCategories = Array.isArray(data.customCategories) ? data.customCategories : [];
       if (!saveRecipes()) {
         alert('Die Sicherung konnte wegen zu wenig Browser-Speicher nicht vollständig wiederhergestellt werden.');
@@ -1603,7 +1658,12 @@ el('importInput').addEventListener('change', async e => {
       }
       saveCustomCategories();
       render();
-      alert('Komplette Sicherung wurde ersetzt.');
+
+      let message = `Komplette Sicherung wurde ersetzt.\n${recipes.length} ${recipes.length === 1 ? 'Rezept ist' : 'Rezepte sind'} jetzt gespeichert.`;
+      if (cleaned.skipped) {
+        message += `\n${cleaned.skipped} ${cleaned.skipped === 1 ? 'doppelter Eintrag wurde' : 'doppelte Einträge wurden'} automatisch übersprungen.`;
+      }
+      alert(message);
     }
   } catch(err) { alert('Diese Datei konnte nicht als gültige Rezeptbox-Sicherung gelesen werden.'); }
   e.target.value='';

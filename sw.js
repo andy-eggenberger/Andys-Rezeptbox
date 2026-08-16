@@ -1,4 +1,4 @@
-const CACHE = 'andys-rezeptbox-v2-2-cache-1';
+const CACHE = 'andys-rezeptbox-v3-11-cache-1';
 const FILES = ['./','./index.html','./styles.css','./app.js','./manifest.webmanifest'];
 self.addEventListener('install', e => {
   self.skipWaiting();
