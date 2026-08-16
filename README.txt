@@ -151,3 +151,11 @@ V3.15:
 - Lange Rezepte: automatisch etwas kompakter, damit sie möglichst auf einer Seite bleiben.
 - Rezepte ohne Zubereitung erhalten einen deutlich breiteren Zutatenblock.
 - Service-Worker-Cache auf V3.15 aktualisiert.
+
+V3.16:
+- Letzte Feinabstimmung der Druckansicht.
+- Kurze und normale Rezepte bleiben gross und gut lesbar wie in V3.15.
+- Lange Rezepte werden automatisch stärker kompakt dargestellt.
+- Ziel: lange Rezepte möglichst auf einer A4-Seite bei 100 % Druck-Skalierung.
+- Bilder, Abstände, Schrift und Links werden nur bei langen Rezepten reduziert.
+- Service-Worker-Cache auf V3.16 aktualisiert.

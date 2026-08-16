@@ -503,7 +503,7 @@ function printRecipe(id){
 
   let density = 'normal';
   if (textLen < 700) density = 'short';
-  else if (textLen > 1800) density = 'long';
+  else if (textLen > 1550) density = 'long';
 
   const hasInstructions = !!r.instructions;
   const hasIngredients = !!r.ingredients;
@@ -543,7 +543,7 @@ function printRecipe(id){
 
   body.normal { font-size: 10.6pt; }
   body.short { font-size: 11.4pt; }
-  body.long { font-size: 9.8pt; }
+  body.long { font-size: 8.9pt; line-height: 1.22; }
 
   .sheet {
     max-width: 190mm;
@@ -552,8 +552,17 @@ function printRecipe(id){
 
   header {
     border-bottom: 1px solid #9ca69b;
+  }
+
+  body.normal header,
+  body.short header {
     padding-bottom: 3.5mm;
     margin-bottom: 5mm;
+  }
+
+  body.long header {
+    padding-bottom: 2.5mm;
+    margin-bottom: 3mm;
   }
 
   h1 {
@@ -564,7 +573,7 @@ function printRecipe(id){
 
   body.normal h1 { font-size: 20pt; }
   body.short h1 { font-size: 22pt; }
-  body.long h1 { font-size: 18pt; }
+  body.long h1 { font-size: 16.5pt; }
 
   .meta {
     display: flex;
@@ -576,15 +585,19 @@ function printRecipe(id){
 
   body.normal .meta { font-size: 8.8pt; }
   body.short .meta { font-size: 9.2pt; }
-  body.long .meta { font-size: 8pt; }
+  body.long .meta { font-size: 7.4pt; gap: 1.4mm; }
 
   .meta-pill {
     display: inline-block;
-    padding: 1mm 2.2mm;
     border: 1px solid #d8ded7;
     border-radius: 999px;
     background: #f7f8f5;
   }
+
+  body.normal .meta-pill,
+  body.short .meta-pill { padding: 1mm 2.2mm; }
+
+  body.long .meta-pill { padding: 0.7mm 1.7mm; }
 
   .updated {
     margin-left: auto;
@@ -603,7 +616,7 @@ function printRecipe(id){
 
   body.normal .images { margin-bottom: 5mm; }
   body.short .images { margin-bottom: 7mm; }
-  body.long .images { margin-bottom: 4mm; }
+  body.long .images { margin-bottom: 3mm; gap: 3mm; }
 
   .recipe-image {
     display: block;
@@ -624,8 +637,8 @@ function printRecipe(id){
   }
 
   body.long .recipe-image {
-    max-width: 58mm;
-    max-height: 58mm;
+    max-width: 48mm;
+    max-height: 48mm;
   }
 
   body.normal .images:has(.recipe-image:nth-child(2)) .recipe-image {
@@ -639,8 +652,8 @@ function printRecipe(id){
   }
 
   body.long .images:has(.recipe-image:nth-child(2)) .recipe-image {
-    max-width: 46mm;
-    max-height: 46mm;
+    max-width: 40mm;
+    max-height: 40mm;
   }
 
   .main-grid {
@@ -651,7 +664,7 @@ function printRecipe(id){
 
   body.normal .main-grid { gap: 5mm; margin-top: 1mm; }
   body.short .main-grid { gap: 6mm; margin-top: 2mm; }
-  body.long .main-grid { gap: 4mm; margin-top: 1mm; }
+  body.long .main-grid { gap: 3mm; margin-top: 0; }
 
   .main-grid.single-column {
     grid-template-columns: 1fr;
@@ -661,7 +674,7 @@ function printRecipe(id){
 
   body.normal .main-grid.single-column { max-width: 125mm; }
   body.short .main-grid.single-column { max-width: 145mm; }
-  body.long .main-grid.single-column { max-width: 112mm; }
+  body.long .main-grid.single-column { max-width: 135mm; }
 
   .box {
     border: 1px solid #d8ded7;
@@ -671,7 +684,7 @@ function printRecipe(id){
 
   body.normal .box { padding: 4mm; }
   body.short .box { padding: 5mm; }
-  body.long .box { padding: 3mm; }
+  body.long .box { padding: 2.3mm; }
 
   .box h2 {
     margin: 0 0 2.2mm 0;
@@ -681,21 +694,24 @@ function printRecipe(id){
 
   body.normal .box h2 { font-size: 12pt; }
   body.short .box h2 { font-size: 13pt; }
-  body.long .box h2 { font-size: 10.8pt; }
+  body.long .box h2 {
+    font-size: 10pt;
+    margin-bottom: 1.3mm;
+    padding-bottom: 0.8mm;
+  }
 
   .content { white-space: normal; }
 
   body.normal .content { font-size: 10.4pt; }
   body.short .content { font-size: 11.2pt; }
-  body.long .content { font-size: 9.5pt; }
+  body.long .content { font-size: 8.6pt; }
 
   .notes {
     margin-top: 5mm;
   }
 
-  body.short .notes {
-    margin-top: 7mm;
-  }
+  body.short .notes { margin-top: 7mm; }
+  body.long .notes { margin-top: 2.5mm; }
 
   .links {
     padding-top: 2.5mm;
@@ -705,13 +721,15 @@ function printRecipe(id){
 
   body.normal .links { margin-top: 4mm; font-size: 8.2pt; }
   body.short .links { margin-top: 6mm; font-size: 8.8pt; }
-  body.long .links { margin-top: 3mm; font-size: 7.6pt; }
+  body.long .links { margin-top: 2mm; padding-top: 1.5mm; font-size: 6.9pt; }
 
   .small-row {
     margin: 1mm 0;
     word-break: break-word;
     overflow-wrap: anywhere;
   }
+
+  body.long .small-row { margin: 0.6mm 0; }
 
   footer {
     padding-top: 2.5mm;
@@ -724,7 +742,7 @@ function printRecipe(id){
 
   body.normal footer { margin-top: 4mm; font-size: 7.4pt; }
   body.short footer { margin-top: 6mm; font-size: 7.8pt; }
-  body.long footer { margin-top: 3mm; font-size: 7pt; }
+  body.long footer { margin-top: 2mm; padding-top: 1.5mm; font-size: 6.6pt; }
 
   @media print {
     html, body {
@@ -771,7 +789,7 @@ function printRecipe(id){
 
     <footer>
       <span>Gedruckt aus Andys Rezeptbox</span>
-      <span>V3.15</span>
+      <span>V3.16</span>
     </footer>
   </div>
 
@@ -1905,7 +1923,7 @@ function mergeRecipesFromBackup(incomingRecipes){
 el('exportBtn').onclick = () => {
   const payload = JSON.stringify({
     app:'Andys Rezeptbox',
-    version:3.15,
+    version:3.16,
     exportedAt:new Date().toISOString(),
     recipes,
     customCategories
