@@ -1050,3 +1050,130 @@ kbd {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
+
+
+/* V3.8 – iPhone-Feinschliff, Druckfunktion & Versionsanzeige */
+.header-buttons {
+  position: relative;
+}
+
+.app-version {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  margin-left: 2px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(94,116,100,.20);
+  color: rgba(94,116,100,.72);
+  background: rgba(255,255,255,.34);
+  font-size: .67rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  white-space: nowrap;
+}
+
+.recipe-card-tools {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 4;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.recipe-card-tools .star-btn,
+.recipe-card-tools .print-btn {
+  position: static !important;
+}
+
+.print-btn {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(221,214,200,.95);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255,253,249,.94);
+  box-shadow: 0 6px 18px rgba(45,56,48,.10);
+  font-size: 1.05rem;
+  padding: 0;
+}
+
+.print-btn:hover,
+.print-btn:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 9px 22px rgba(45,56,48,.14);
+}
+
+/* Feste Fläche hinter der iPhone-Statusleiste */
+@supports (padding: max(0px)) {
+  body::before {
+    content: "";
+    position: fixed;
+    z-index: 9998;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top);
+    background: #f5f1ea;
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .category,
+  .category strong {
+    color: var(--text) !important;
+    -webkit-text-fill-color: var(--text);
+  }
+
+  .category small {
+    color: var(--muted) !important;
+    -webkit-text-fill-color: var(--muted);
+  }
+
+  .category.active strong {
+    color: var(--accent-dark) !important;
+    -webkit-text-fill-color: var(--accent-dark);
+  }
+
+  .app-version {
+    position: absolute;
+    right: 0;
+    bottom: -18px;
+    font-size: .62rem;
+    opacity: .72;
+  }
+
+  .print-btn {
+    width: 38px;
+    height: 38px;
+    font-size: .95rem;
+  }
+}
+
+
+/* V3.9 – Sicherungsfunktionen klarer erklärt */
+.backup-help {
+  margin: 14px 0 16px;
+  padding: 14px 16px;
+  border: 1px dashed rgba(108,136,117,.35);
+  border-radius: 18px;
+  background: rgba(238,245,239,.55);
+}
+.backup-help p {
+  margin: 0 0 8px;
+  line-height: 1.45;
+}
+.backup-help p:last-child {
+  margin-bottom: 0;
+}
+@media (max-width: 700px) {
+  .backup-help {
+    padding: 14px;
+    font-size: .92rem;
+  }
+}

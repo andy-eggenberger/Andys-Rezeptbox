@@ -223,7 +223,10 @@ function renderRecipes(){
     return `
       <div class="recipe-card" data-id="${r.id}">
         <div class="recipe-media">
-          <button class="star-btn ${r.favorite?'on':''}" data-star="${r.id}" aria-label="Favorit">${r.favorite?'★':'☆'}</button>
+          <div class="recipe-card-tools">
+            <button class="print-btn" data-print="${r.id}" aria-label="Rezept drucken" title="Rezept drucken">🖨️</button>
+            <button class="star-btn ${r.favorite?'on':''}" data-star="${r.id}" aria-label="Favorit">${r.favorite?'★':'☆'}</button>
+          </div>
           ${imgs[0]
             ? `<img src="${imgs[0]}" alt="${escapeHtml(r.title)}">`
             : r.video
@@ -244,8 +247,12 @@ function renderRecipes(){
   }).join('');
 
   recipeGrid.querySelectorAll('.recipe-card').forEach(card => card.addEventListener('click', e => {
-    if (e.target.closest('[data-star]')) return;
+    if (e.target.closest('[data-star]') || e.target.closest('[data-print]')) return;
     openView(card.dataset.id);
+  }));
+  recipeGrid.querySelectorAll('[data-print]').forEach(btn => btn.addEventListener('click', e => {
+    e.stopPropagation();
+    printRecipe(btn.dataset.print);
   }));
   recipeGrid.querySelectorAll('[data-star]').forEach(btn => btn.addEventListener('click', e => {
     e.stopPropagation();
@@ -425,6 +432,177 @@ function readVideoFileAsDataUrl(file){
   });
 }
 
+
+function printRecipe(id){
+  const r = recipes.find(x => x.id === id);
+  if (!r) return;
+
+  const imgs = getImages(r);
+  const printableImages = imgs.map((src, i) =>
+    `<img src="${src}" alt="${escapeHtml(r.title)} – Bild ${i + 1}">`
+  ).join('');
+
+  const videoInfo = r.video
+    ? r.video.startsWith('data:video/')
+      ? '<p>Im Rezept ist eine Videodatei gespeichert. Videos können auf Papier nicht wiedergegeben werden.</p>'
+      : `<p><a href="${escapeHtml(r.video)}">${escapeHtml(r.video)}</a></p>`
+    : '<p>—</p>';
+
+  const sourceInfo = r.source
+    ? `<p><a href="${escapeHtml(r.source)}">${escapeHtml(r.source)}</a></p>`
+    : '<p>—</p>';
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Das Druckfenster konnte nicht geöffnet werden. Bitte erlaube Pop-ups für diese Seite und versuche es nochmals.');
+    return;
+  }
+
+  const documentHtml = `<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(r.title)} – Andys Rezeptbox</title>
+<style>
+  @page { size: A4; margin: 14mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    color: #26302a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    line-height: 1.45;
+    font-size: 11.5pt;
+  }
+  header {
+    border-bottom: 2px solid #7e9b83;
+    padding-bottom: 8mm;
+    margin-bottom: 8mm;
+  }
+  h1 {
+    margin: 0 0 3mm;
+    font-size: 24pt;
+    line-height: 1.12;
+  }
+  .meta {
+    color: #6d756f;
+    font-size: 10pt;
+  }
+  .badge {
+    display: inline-block;
+    background: #edf4ee;
+    color: #5e7464;
+    border-radius: 999px;
+    padding: 2mm 4mm;
+    font-weight: 700;
+    margin-right: 2mm;
+  }
+  .images {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5mm;
+    margin: 0 0 8mm;
+  }
+  .images img {
+    width: 100%;
+    max-height: 105mm;
+    object-fit: contain;
+    border-radius: 4mm;
+    border: 1px solid #ddd6c8;
+    break-inside: avoid;
+  }
+  .images img:first-child {
+    grid-column: 1 / -1;
+    max-height: 135mm;
+  }
+  section {
+    margin: 0 0 7mm;
+    break-inside: avoid;
+  }
+  h2 {
+    font-size: 15pt;
+    margin: 0 0 2.5mm;
+    color: #26302a;
+  }
+  .text {
+    white-space: pre-wrap;
+    border: 1px solid #ddd6c8;
+    border-radius: 4mm;
+    padding: 5mm;
+    background: #fffdf9;
+  }
+  a {
+    color: #425b49;
+    overflow-wrap: anywhere;
+  }
+  footer {
+    margin-top: 10mm;
+    padding-top: 4mm;
+    border-top: 1px solid #ddd6c8;
+    color: #7a807b;
+    font-size: 8.5pt;
+  }
+  @media print {
+    button { display: none !important; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>${escapeHtml(r.title)}</h1>
+  <div class="meta">
+    <span class="badge">${escapeHtml(r.category || 'Sonstiges')}</span>
+    ${r.favorite ? '<span class="badge">★ Favorit</span>' : ''}
+    ${imgs.length ? `<span class="badge">📷 ${imgs.length} ${imgs.length === 1 ? 'Bild' : 'Bilder'}</span>` : ''}
+    ${r.video ? '<span class="badge">🎬 Video</span>' : ''}
+    ${r.updatedAt ? `<div style="margin-top:3mm">Zuletzt geändert: ${formatDate(r.updatedAt)}</div>` : ''}
+  </div>
+</header>
+
+${printableImages ? `<div class="images">${printableImages}</div>` : ''}
+
+<section>
+  <h2>Zutaten</h2>
+  <div class="text">${escapeHtml(r.ingredients || '—')}</div>
+</section>
+
+<section>
+  <h2>Zubereitung</h2>
+  <div class="text">${escapeHtml(r.instructions || '—')}</div>
+</section>
+
+<section>
+  <h2>Eigene Notizen</h2>
+  <div class="text">${escapeHtml(r.notes || '—')}</div>
+</section>
+
+<section>
+  <h2>Video</h2>
+  ${videoInfo}
+</section>
+
+<section>
+  <h2>Original-Link</h2>
+  ${sourceInfo}
+</section>
+
+<footer>
+  Gedruckt aus Andys Rezeptbox · V3.8 · ${new Date().toLocaleDateString('de-CH')}
+</footer>
+
+<script>
+  window.addEventListener('load', () => {
+    setTimeout(() => window.print(), 250);
+  });
+<\/script>
+</body>
+</html>`;
+
+  printWindow.document.open();
+  printWindow.document.write(documentHtml);
+  printWindow.document.close();
+}
+
 function openView(id){
   const r = recipes.find(x => x.id === id); if (!r) return;
   const imgs = getImages(r);
@@ -448,10 +626,12 @@ function openView(id){
     ${r.notes ? `<div class="view-section"><strong>Eigene Notizen</strong>\n${escapeHtml(r.notes)}</div>` : ''}
     ${r.source ? `<div class="view-section"><strong>Original-Link</strong><br><a class="source-link" href="${escapeHtml(r.source)}" target="_blank" rel="noopener">${escapeHtml(r.source)}</a></div>` : ''}
     <div class="view-actions">
+      <button class="secondary" id="printFromView">🖨️ Drucken</button>
       <button class="primary" id="editFromView">Bearbeiten</button>
       <button class="secondary" id="closeView">Schliessen</button>
     </div>
   </div>`;
+  el('printFromView').onclick = () => printRecipe(id);
   el('editFromView').onclick = () => openEdit(id);
   el('closeView').onclick = () => viewDialog.close();
   viewDialog.showModal();
@@ -1345,7 +1525,7 @@ function mergeRecipesFromBackup(incomingRecipes){
 el('exportBtn').onclick = () => {
   const payload = JSON.stringify({
     app:'Andys Rezeptbox',
-    version:3.4,
+    version:3.9,
     exportedAt:new Date().toISOString(),
     recipes,
     customCategories
@@ -1423,7 +1603,7 @@ el('importInput').addEventListener('change', async e => {
       }
       saveCustomCategories();
       render();
-      alert('Sicherung wurde wiederhergestellt.');
+      alert('Komplette Sicherung wurde ersetzt.');
     }
   } catch(err) { alert('Diese Datei konnte nicht als gültige Rezeptbox-Sicherung gelesen werden.'); }
   e.target.value='';

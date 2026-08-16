@@ -83,3 +83,17 @@ V3.7:
 - Kategorien auf dem iPhone zweispaltig.
 - Schwebender Plus-Button auf dem iPhone ausgeblendet.
 - PC-Darstellung bleibt unverändert.
+
+V3.8:
+- Kategorienamen auf dem iPhone wieder in dunkler App-Schrift.
+- Sicherheitsfläche für die iPhone-Statusleiste ergänzt.
+- Jedes Rezept kann einzeln gedruckt werden (direkt auf der Rezeptkarte und in der Detailansicht).
+- Druckansicht enthält Titel, Kategorie, Favorit, alle Bilder, Zutaten, Zubereitung, Notizen, Video-Info und Original-Link.
+- Versionsnummer V3.8 dezent in der Kopfzeile.
+
+V3.9:
+- Sicherungsfunktionen klarer beschriftet.
+- "Backup" heisst jetzt "Sicherung herunterladen".
+- "Wiederherstellen" heisst jetzt "Komplette Sicherung ersetzen".
+- "Sicherung hinzufügen" heisst jetzt "Sicherung zusätzlich einlesen".
+- Im Sicherungsbereich wird der Unterschied der drei Funktionen kurz erklärt.
