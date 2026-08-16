@@ -272,15 +272,19 @@ async function syncFetch(action, options={}){
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 35000);
   try {
-    return await fetch(`${settings.url}/?action=${encodeURIComponent(action)}`, {
+    let supplied = {};
+    if (options.body) {
+      try { supplied = JSON.parse(options.body); } catch { supplied = {}; }
+    }
+    return await fetch(`${settings.url}/`, {
       ...options,
+      method:'POST',
       cache:'no-store',
       signal:controller.signal,
       headers:{
-        'Content-Type':'application/json',
-        'X-Rezeptbox-Key':settings.key,
-        ...(options.headers || {})
-      }
+        'Content-Type':'text/plain;charset=UTF-8'
+      },
+      body:JSON.stringify({ ...supplied, action, key:settings.key })
     });
   } finally { clearTimeout(timeout); }
 }
