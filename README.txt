@@ -111,3 +111,13 @@ V3.11:
 - "Komplette Sicherung ersetzen" entfernt Dubletten innerhalb der Sicherungsdatei automatisch.
 - Nach der Wiederherstellung wird angezeigt, wie viele Dubletten übersprungen wurden.
 - Service-Worker-Cache aktualisiert, damit die neue Version auf PC/iPhone zuverlässig geladen wird.
+
+V3.12:
+- Verbesserte Dubletten-/Ähnlichkeitsprüfung.
+- Vergleicht Titel, Bilder, Zutaten/Zubereitung/Notizen und Quelle.
+- Gleicher Titel löst immer eine Warnung aus.
+- Gleiches Bild plus ähnlicher Text löst ebenfalls eine Warnung aus.
+- Gleiche Quelle plus ähnliche Inhalte löst ebenfalls eine Warnung aus.
+- Bei Verdacht entscheidet der Nutzer: Abbrechen oder trotzdem speichern.
+- Exakte Dubletten beim Einlesen von Sicherungen bleiben automatisch geschützt.
+- Service-Worker-Cache auf V3.12 aktualisiert.

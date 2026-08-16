@@ -1242,19 +1242,23 @@ el('recipeForm').addEventListener('submit', e => {
   const i = recipes.findIndex(r => r.id === id);
   const previous = i >= 0 ? {...recipes[i]} : null;
 
-  // Duplikat-Schutz für neu angelegte und importierte Rezepte.
-  // Beim Bearbeiten eines bestehenden Rezepts wird der eigene Datensatz ignoriert.
-  const fingerprint = normalizedRecipeFingerprint(data);
-  const duplicate = recipes.find(r =>
-    r.id !== id && normalizedRecipeFingerprint(r) === fingerprint
-  );
+  // V3.12: Ähnlichkeitsprüfung aus Titel, Bild, Text und Quelle.
+  // Der Nutzer entscheidet selbst, ob eine ähnliche Variante trotzdem gespeichert wird.
+  const similar = findSimilarRecipe(data, id);
 
-  if (duplicate) {
-    alert(
-      `Dieses Rezept ist bereits vorhanden:\n\n„${duplicate.title}“\n\n` +
-      'Es wurde kein zweiter Eintrag gespeichert.'
+  if (similar) {
+    const reasons = similar.similarity.reasons.length
+      ? similar.similarity.reasons.join(', ')
+      : 'mehrere ähnliche Merkmale';
+
+    const saveAnyway = confirm(
+      `Dieses Rezept ähnelt einem bereits gespeicherten Rezept sehr stark:\n\n` +
+      `„${similar.recipe.title}“\n\n` +
+      `Übereinstimmung: ${reasons}.\n\n` +
+      `OK = trotzdem speichern\nAbbrechen = nicht speichern`
     );
-    return;
+
+    if (!saveAnyway) return;
   }
 
   if (i >= 0) recipes[i] = {...recipes[i], ...data};
@@ -1474,20 +1478,158 @@ function normalizeFingerprintText(value){
   return String(value || '')
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, ' ');
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function normalizedRecipeFingerprint(recipe){
   const r = normalizeRecipe(recipe);
-  // Kategorie und ID werden bewusst NICHT berücksichtigt:
-  // Dasselbe Rezept soll auch dann als Duplikat erkannt werden,
-  // wenn es später einer anderen Kategorie zugeordnet wurde.
   return [
     normalizeFingerprintText(r.title),
     normalizeFingerprintText(r.ingredients),
     normalizeFingerprintText(r.instructions),
     normalizeFingerprintText(r.source)
   ].join('||');
+}
+
+function recipeImageKeys(recipe){
+  const r = normalizeRecipe(recipe);
+  const values = [];
+
+  if (r.image) values.push(r.image);
+  if (Array.isArray(r.images)) values.push(...r.images);
+
+  const keys = new Set();
+
+  for (const raw of values) {
+    const value = String(raw || '').trim();
+    if (!value) continue;
+
+    // Exakte Bilddaten bzw. exakte URL.
+    keys.add(value);
+
+    // Bei Web-Bildern zusätzlich die URL ohne Query-Parameter.
+    if (/^https?:\/\//i.test(value)) {
+      try {
+        const u = new URL(value);
+        u.search = '';
+        u.hash = '';
+        keys.add(u.toString().toLowerCase());
+
+        const fileName = decodeURIComponent(u.pathname.split('/').pop() || '').toLowerCase();
+        if (fileName) keys.add('file:' + fileName);
+      } catch (_) {}
+    }
+  }
+
+  return keys;
+}
+
+function tokenSet(value){
+  const text = normalizeFingerprintText(value);
+  return new Set(
+    text.split(' ').filter(token => token.length >= 3)
+  );
+}
+
+function textSimilarity(a, b){
+  const A = tokenSet(a);
+  const B = tokenSet(b);
+
+  if (!A.size && !B.size) return 1;
+  if (!A.size || !B.size) return 0;
+
+  let intersection = 0;
+  for (const token of A) {
+    if (B.has(token)) intersection++;
+  }
+
+  const union = new Set([...A, ...B]).size;
+  return union ? intersection / union : 0;
+}
+
+function hasCommonImage(a, b){
+  const A = recipeImageKeys(a);
+  const B = recipeImageKeys(b);
+  if (!A.size || !B.size) return false;
+
+  for (const key of A) {
+    if (B.has(key)) return true;
+  }
+  return false;
+}
+
+function recipeSimilarity(a, b){
+  const A = normalizeRecipe(a);
+  const B = normalizeRecipe(b);
+
+  const titleA = normalizeFingerprintText(A.title);
+  const titleB = normalizeFingerprintText(B.title);
+  const titleExact = !!titleA && titleA === titleB;
+  const titleScore = textSimilarity(A.title, B.title);
+
+  const textA = [A.ingredients, A.instructions, A.notes].filter(Boolean).join(' ');
+  const textB = [B.ingredients, B.instructions, B.notes].filter(Boolean).join(' ');
+  const textScore = textSimilarity(textA, textB);
+
+  const sourceA = normalizeFingerprintText(A.source);
+  const sourceB = normalizeFingerprintText(B.source);
+  const sameSource = !!sourceA && !!sourceB && sourceA === sourceB;
+
+  const sameImage = hasCommonImage(A, B);
+
+  let score = 0;
+  if (titleExact) score += 5;
+  else if (titleScore >= 0.80) score += 4;
+  else if (titleScore >= 0.60) score += 2;
+
+  if (sameImage) score += 4;
+
+  if (textScore >= 0.75) score += 4;
+  else if (textScore >= 0.50) score += 3;
+  else if (textScore >= 0.30) score += 1;
+
+  if (sameSource) score += 3;
+
+  // Warnen bei gleichem Titel immer.
+  // Sonst müssen mindestens zwei starke Merkmale zusammenpassen.
+  const suspicious =
+    titleExact ||
+    score >= 6 ||
+    (sameImage && textScore >= 0.30) ||
+    (sameSource && (titleScore >= 0.50 || textScore >= 0.30));
+
+  const reasons = [];
+  if (titleExact) reasons.push('gleicher Titel');
+  else if (titleScore >= 0.80) reasons.push('sehr ähnlicher Titel');
+  else if (titleScore >= 0.60) reasons.push('ähnlicher Titel');
+
+  if (sameImage) reasons.push('gleiches Bild');
+  if (textScore >= 0.75) reasons.push('sehr ähnlicher Text');
+  else if (textScore >= 0.50) reasons.push('ähnlicher Text');
+  if (sameSource) reasons.push('gleiche Quelle');
+
+  return { suspicious, score, reasons, titleScore, textScore, sameImage, sameSource };
+}
+
+function findSimilarRecipe(candidate, currentId){
+  let best = null;
+
+  for (const existing of recipes) {
+    if (existing.id === currentId) continue;
+
+    const similarity = recipeSimilarity(candidate, existing);
+    if (!similarity.suspicious) continue;
+
+    if (!best || similarity.score > best.similarity.score) {
+      best = {recipe: existing, similarity};
+    }
+  }
+
+  return best;
 }
 
 function dedupeRecipeList(incomingRecipes){
@@ -1579,7 +1721,7 @@ function mergeRecipesFromBackup(incomingRecipes){
 el('exportBtn').onclick = () => {
   const payload = JSON.stringify({
     app:'Andys Rezeptbox',
-    version:3.11,
+    version:3.12,
     exportedAt:new Date().toISOString(),
     recipes,
     customCategories
