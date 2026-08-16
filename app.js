@@ -496,6 +496,15 @@ function printRecipe(id){
     ? `<section class="links">${video}${source}</section>`
     : '';
 
+  const textLen = [r.ingredients, r.instructions, r.notes, r.source, r.videoUrl]
+    .filter(Boolean)
+    .join(' ')
+    .length;
+
+  let density = 'normal';
+  if (textLen < 700) density = 'short';
+  else if (textLen > 1800) density = 'long';
+
   const hasInstructions = !!r.instructions;
   const hasIngredients = !!r.ingredients;
 
@@ -518,7 +527,7 @@ function printRecipe(id){
 <style>
   @page {
     size: A4 portrait;
-    margin: 10mm 11mm 10mm 11mm;
+    margin: 9mm 10mm 9mm 10mm;
   }
 
   * { box-sizing: border-box; }
@@ -529,14 +538,15 @@ function printRecipe(id){
     background: #fff;
     color: #20251f;
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 10.2pt;
     line-height: 1.34;
   }
 
-  body { width: 100%; }
+  body.normal { font-size: 10.6pt; }
+  body.short { font-size: 11.4pt; }
+  body.long { font-size: 9.8pt; }
 
   .sheet {
-    max-width: 188mm;
+    max-width: 190mm;
     margin: 0 auto;
   }
 
@@ -547,20 +557,26 @@ function printRecipe(id){
   }
 
   h1 {
-    font-size: 19pt;
     line-height: 1.12;
     margin: 0 0 2.5mm 0;
     font-weight: 700;
   }
+
+  body.normal h1 { font-size: 20pt; }
+  body.short h1 { font-size: 22pt; }
+  body.long h1 { font-size: 18pt; }
 
   .meta {
     display: flex;
     flex-wrap: wrap;
     gap: 2mm;
     align-items: center;
-    font-size: 8.5pt;
     color: #4f5a50;
   }
+
+  body.normal .meta { font-size: 8.8pt; }
+  body.short .meta { font-size: 9.2pt; }
+  body.long .meta { font-size: 8pt; }
 
   .meta-pill {
     display: inline-block;
@@ -581,78 +597,115 @@ function printRecipe(id){
     align-items: flex-start;
     gap: 4mm;
     flex-wrap: wrap;
-    margin: 0 0 5mm 0;
     page-break-inside: avoid;
     break-inside: avoid;
   }
 
+  body.normal .images { margin-bottom: 5mm; }
+  body.short .images { margin-bottom: 7mm; }
+  body.long .images { margin-bottom: 4mm; }
+
   .recipe-image {
     display: block;
-    max-width: 68mm;
-    max-height: 68mm;
     width: auto;
     height: auto;
     object-fit: contain;
     border-radius: 2mm;
   }
 
-  .images:has(.recipe-image:nth-child(2)) .recipe-image {
-    max-width: 52mm;
-    max-height: 52mm;
+  body.normal .recipe-image {
+    max-width: 72mm;
+    max-height: 72mm;
   }
 
-  .images:has(.recipe-image:nth-child(3)) .recipe-image {
-    max-width: 42mm;
-    max-height: 42mm;
+  body.short .recipe-image {
+    max-width: 82mm;
+    max-height: 82mm;
+  }
+
+  body.long .recipe-image {
+    max-width: 58mm;
+    max-height: 58mm;
+  }
+
+  body.normal .images:has(.recipe-image:nth-child(2)) .recipe-image {
+    max-width: 54mm;
+    max-height: 54mm;
+  }
+
+  body.short .images:has(.recipe-image:nth-child(2)) .recipe-image {
+    max-width: 62mm;
+    max-height: 62mm;
+  }
+
+  body.long .images:has(.recipe-image:nth-child(2)) .recipe-image {
+    max-width: 46mm;
+    max-height: 46mm;
   }
 
   .main-grid {
     display: grid;
     grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.35fr);
-    gap: 5mm;
     align-items: start;
-    margin-top: 1mm;
   }
+
+  body.normal .main-grid { gap: 5mm; margin-top: 1mm; }
+  body.short .main-grid { gap: 6mm; margin-top: 2mm; }
+  body.long .main-grid { gap: 4mm; margin-top: 1mm; }
 
   .main-grid.single-column {
     grid-template-columns: 1fr;
-    max-width: 112mm;
     margin-left: auto;
     margin-right: auto;
   }
 
+  body.normal .main-grid.single-column { max-width: 125mm; }
+  body.short .main-grid.single-column { max-width: 145mm; }
+  body.long .main-grid.single-column { max-width: 112mm; }
+
   .box {
     border: 1px solid #d8ded7;
     border-radius: 2.5mm;
-    padding: 3.5mm;
     margin: 0;
-    break-inside: avoid;
-    page-break-inside: avoid;
   }
 
+  body.normal .box { padding: 4mm; }
+  body.short .box { padding: 5mm; }
+  body.long .box { padding: 3mm; }
+
   .box h2 {
-    font-size: 11.5pt;
     margin: 0 0 2.2mm 0;
     padding-bottom: 1.2mm;
     border-bottom: 1px solid #e4e8e3;
   }
 
-  .content {
-    white-space: normal;
-    font-size: 10pt;
-  }
+  body.normal .box h2 { font-size: 12pt; }
+  body.short .box h2 { font-size: 13pt; }
+  body.long .box h2 { font-size: 10.8pt; }
+
+  .content { white-space: normal; }
+
+  body.normal .content { font-size: 10.4pt; }
+  body.short .content { font-size: 11.2pt; }
+  body.long .content { font-size: 9.5pt; }
 
   .notes {
     margin-top: 5mm;
   }
 
+  body.short .notes {
+    margin-top: 7mm;
+  }
+
   .links {
-    margin-top: 4mm;
     padding-top: 2.5mm;
     border-top: 1px solid #d8ded7;
-    font-size: 8pt;
     color: #455045;
   }
+
+  body.normal .links { margin-top: 4mm; font-size: 8.2pt; }
+  body.short .links { margin-top: 6mm; font-size: 8.8pt; }
+  body.long .links { margin-top: 3mm; font-size: 7.6pt; }
 
   .small-row {
     margin: 1mm 0;
@@ -661,15 +714,17 @@ function printRecipe(id){
   }
 
   footer {
-    margin-top: 4mm;
     padding-top: 2.5mm;
     border-top: 1px solid #e4e8e3;
-    font-size: 7.3pt;
     color: #6b746c;
     display: flex;
     justify-content: space-between;
     gap: 4mm;
   }
+
+  body.normal footer { margin-top: 4mm; font-size: 7.4pt; }
+  body.short footer { margin-top: 6mm; font-size: 7.8pt; }
+  body.long footer { margin-top: 3mm; font-size: 7pt; }
 
   @media print {
     html, body {
@@ -682,8 +737,6 @@ function printRecipe(id){
       max-width: none;
     }
 
-    /* Für längere Rezepte dürfen die Textbereiche umbrechen,
-       damit kein unnötiger Seitenwechsel entsteht. */
     .ingredients,
     .instructions,
     .notes {
@@ -693,7 +746,7 @@ function printRecipe(id){
   }
 </style>
 </head>
-<body>
+<body class="${density}">
   <div class="sheet">
     <header>
       <h1>${esc(r.title)}</h1>
@@ -718,7 +771,7 @@ function printRecipe(id){
 
     <footer>
       <span>Gedruckt aus Andys Rezeptbox</span>
-      <span>V3.14</span>
+      <span>V3.15</span>
     </footer>
   </div>
 
@@ -1852,7 +1905,7 @@ function mergeRecipesFromBackup(incomingRecipes){
 el('exportBtn').onclick = () => {
   const payload = JSON.stringify({
     app:'Andys Rezeptbox',
-    version:3.14,
+    version:3.15,
     exportedAt:new Date().toISOString(),
     recipes,
     customCategories

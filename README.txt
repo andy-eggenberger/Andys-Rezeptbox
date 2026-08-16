@@ -143,3 +143,11 @@ V3.14:
 - Original-Link/Video kompakt, aber besser lesbar.
 - Ziel bleibt: normale Rezepte möglichst auf einer A4-Seite.
 - Service-Worker-Cache auf V3.14 aktualisiert.
+
+V3.15:
+- Druckansicht nutzt A4 je nach Rezeptlänge automatisch besser aus.
+- Kurze Rezepte: grössere Schrift, grössere Bilder, breitere Boxen und mehr Luft.
+- Normale Rezepte: ausgewogene A4-Darstellung.
+- Lange Rezepte: automatisch etwas kompakter, damit sie möglichst auf einer Seite bleiben.
+- Rezepte ohne Zubereitung erhalten einen deutlich breiteren Zutatenblock.
+- Service-Worker-Cache auf V3.15 aktualisiert.
