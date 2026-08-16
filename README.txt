@@ -121,3 +121,14 @@ V3.12:
 - Bei Verdacht entscheidet der Nutzer: Abbrechen oder trotzdem speichern.
 - Exakte Dubletten beim Einlesen von Sicherungen bleiben automatisch geschützt.
 - Service-Worker-Cache auf V3.12 aktualisiert.
+
+V3.13:
+- Druckansicht komplett überarbeitet.
+- Rezeptbild deutlich kleiner.
+- Zutaten links und Zubereitung rechts nebeneinander.
+- Eigene Notizen darunter über die ganze Breite.
+- Video und Original-Link kompakt am Schluss.
+- Weniger Leerraum und kleinere Abstände.
+- Normale Rezepte sollen möglichst auf eine A4-Seite passen.
+- Lange Rezepte dürfen weiterhin auf mehrere Seiten umbrechen.
+- Service-Worker-Cache auf V3.13 aktualisiert.

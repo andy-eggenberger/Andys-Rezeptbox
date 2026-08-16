@@ -434,172 +434,287 @@ function readVideoFileAsDataUrl(file){
 
 
 function printRecipe(id){
-  const r = recipes.find(x => x.id === id);
-  if (!r) return;
+  const recipe = recipes.find(r => r.id === id);
+  if (!recipe) return;
 
-  const imgs = getImages(r);
-  const printableImages = imgs.map((src, i) =>
-    `<img src="${src}" alt="${escapeHtml(r.title)} – Bild ${i + 1}">`
-  ).join('');
+  const r = normalizeRecipe(recipe);
 
-  const videoInfo = r.video
-    ? r.video.startsWith('data:video/')
-      ? '<p>Im Rezept ist eine Videodatei gespeichert. Videos können auf Papier nicht wiedergegeben werden.</p>'
-      : `<p><a href="${escapeHtml(r.video)}">${escapeHtml(r.video)}</a></p>`
-    : '<p>—</p>';
+  const esc = (value) => String(value || '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
 
-  const sourceInfo = r.source
-    ? `<p><a href="${escapeHtml(r.source)}">${escapeHtml(r.source)}</a></p>`
-    : '<p>—</p>';
+  const nl = (value) => esc(value).replace(/\n/g,'<br>');
+
+  const imgList = [];
+  if (r.image) imgList.push(r.image);
+  if (Array.isArray(r.images)) {
+    for (const img of r.images) {
+      if (img && !imgList.includes(img)) imgList.push(img);
+    }
+  }
+
+  const imagesHtml = imgList.length
+    ? `<div class="images">${imgList.map((src, idx) =>
+        `<img class="recipe-image ${idx === 0 ? 'main-image' : ''}" src="${esc(src)}" alt="Rezeptbild">`
+      ).join('')}</div>`
+    : '';
+
+  const category = r.category ? `<span class="meta-pill">${esc(r.category)}</span>` : '';
+  const favorite = r.favorite ? `<span class="meta-pill">★ Favorit</span>` : '';
+  const imageCount = imgList.length ? `<span class="meta-pill">📷 ${imgList.length} Bild${imgList.length === 1 ? '' : 'er'}</span>` : '';
+  const videoBadge = (r.videoUrl || r.videoData) ? `<span class="meta-pill">🎬 Video</span>` : '';
+
+  const updated = r.updatedAt
+    ? new Date(r.updatedAt).toLocaleDateString('de-CH')
+    : '';
+
+  const ingredients = r.ingredients
+    ? `<section class="box ingredients"><h2>Zutaten</h2><div class="content">${nl(r.ingredients)}</div></section>`
+    : '';
+
+  const instructions = r.instructions
+    ? `<section class="box instructions"><h2>Zubereitung</h2><div class="content">${nl(r.instructions)}</div></section>`
+    : '';
+
+  const notes = r.notes
+    ? `<section class="box notes"><h2>Eigene Notizen</h2><div class="content">${nl(r.notes)}</div></section>`
+    : '';
+
+  const videoValue = r.videoUrl || '';
+  const video = videoValue
+    ? `<div class="small-row"><strong>Video:</strong> <span>${esc(videoValue)}</span></div>`
+    : '';
+
+  const source = r.source
+    ? `<div class="small-row"><strong>Original-Link:</strong> <span>${esc(r.source)}</span></div>`
+    : '';
+
+  const infoBlock = (video || source)
+    ? `<section class="links">${video}${source}</section>`
+    : '';
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
-    alert('Das Druckfenster konnte nicht geöffnet werden. Bitte erlaube Pop-ups für diese Seite und versuche es nochmals.');
+    alert('Das Druckfenster konnte nicht geöffnet werden. Bitte Pop-ups für diese Seite erlauben.');
     return;
   }
 
-  const documentHtml = `<!DOCTYPE html>
+  printWindow.document.open();
+  printWindow.document.write(`<!doctype html>
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(r.title)} – Andys Rezeptbox</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(r.title)} – Andys Rezeptbox</title>
 <style>
-  @page { size: A4; margin: 14mm; }
-  * { box-sizing: border-box; }
-  body {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 11mm 10mm 11mm;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
     margin: 0;
-    color: #26302a;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-    line-height: 1.45;
-    font-size: 11.5pt;
+    padding: 0;
+    background: #fff;
+    color: #20251f;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 9.4pt;
+    line-height: 1.28;
   }
-  header {
-    border-bottom: 2px solid #7e9b83;
-    padding-bottom: 8mm;
-    margin-bottom: 8mm;
-  }
-  h1 {
-    margin: 0 0 3mm;
-    font-size: 24pt;
-    line-height: 1.12;
-  }
-  .meta {
-    color: #6d756f;
-    font-size: 10pt;
-  }
-  .badge {
-    display: inline-block;
-    background: #edf4ee;
-    color: #5e7464;
-    border-radius: 999px;
-    padding: 2mm 4mm;
-    font-weight: 700;
-    margin-right: 2mm;
-  }
-  .images {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 5mm;
-    margin: 0 0 8mm;
-  }
-  .images img {
+
+  body {
     width: 100%;
-    max-height: 105mm;
+  }
+
+  .sheet {
+    max-width: 188mm;
+    margin: 0 auto;
+  }
+
+  header {
+    border-bottom: 1px solid #9ca69b;
+    padding-bottom: 3mm;
+    margin-bottom: 4mm;
+  }
+
+  h1 {
+    font-size: 18pt;
+    line-height: 1.08;
+    margin: 0 0 2mm 0;
+    font-weight: 700;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2mm;
+    align-items: center;
+    font-size: 8.2pt;
+    color: #4f5a50;
+  }
+
+  .meta-pill {
+    display: inline-block;
+    padding: 1mm 2mm;
+    border: 1px solid #d8ded7;
+    border-radius: 999px;
+    background: #f7f8f5;
+  }
+
+  .updated {
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  .images {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 3mm;
+    flex-wrap: wrap;
+    margin: 0 0 4mm 0;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .recipe-image {
+    display: block;
+    max-width: 54mm;
+    max-height: 54mm;
+    width: auto;
+    height: auto;
     object-fit: contain;
-    border-radius: 4mm;
-    border: 1px solid #ddd6c8;
+    border-radius: 2mm;
+  }
+
+  .images:has(.recipe-image:nth-child(2)) .recipe-image {
+    max-width: 44mm;
+    max-height: 44mm;
+  }
+
+  .main-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.35fr);
+    gap: 4mm;
+    align-items: start;
+    margin-top: 1mm;
+  }
+
+  .box {
+    border: 1px solid #d8ded7;
+    border-radius: 2.5mm;
+    padding: 3mm;
+    margin: 0;
     break-inside: avoid;
+    page-break-inside: avoid;
   }
-  .images img:first-child {
-    grid-column: 1 / -1;
-    max-height: 135mm;
+
+  .box h2 {
+    font-size: 11pt;
+    margin: 0 0 2mm 0;
+    padding-bottom: 1mm;
+    border-bottom: 1px solid #e4e8e3;
   }
-  section {
-    margin: 0 0 7mm;
-    break-inside: avoid;
+
+  .content {
+    white-space: normal;
   }
-  h2 {
-    font-size: 15pt;
-    margin: 0 0 2.5mm;
-    color: #26302a;
+
+  .notes {
+    margin-top: 4mm;
   }
-  .text {
-    white-space: pre-wrap;
-    border: 1px solid #ddd6c8;
-    border-radius: 4mm;
-    padding: 5mm;
-    background: #fffdf9;
+
+  .links {
+    margin-top: 3mm;
+    padding-top: 2mm;
+    border-top: 1px solid #d8ded7;
+    font-size: 7.7pt;
+    color: #455045;
   }
-  a {
-    color: #425b49;
-    overflow-wrap: anywhere;
+
+  .small-row {
+    margin: 0.8mm 0;
+    word-break: break-all;
   }
+
   footer {
-    margin-top: 10mm;
-    padding-top: 4mm;
-    border-top: 1px solid #ddd6c8;
-    color: #7a807b;
-    font-size: 8.5pt;
+    margin-top: 3mm;
+    padding-top: 2mm;
+    border-top: 1px solid #e4e8e3;
+    font-size: 7pt;
+    color: #6b746c;
+    display: flex;
+    justify-content: space-between;
+    gap: 4mm;
   }
+
   @media print {
-    button { display: none !important; }
+    html, body {
+      width: auto;
+      height: auto;
+      overflow: visible;
+    }
+
+    .sheet {
+      max-width: none;
+    }
+  }
+
+  /* Bei langen Rezepten darf der rechte Textblock umbrechen.
+     Kurze Rezepte bleiben möglichst komplett auf einer Seite. */
+  @media print and (max-width: 210mm) {
+    .instructions {
+      break-inside: auto;
+      page-break-inside: auto;
+    }
   }
 </style>
 </head>
 <body>
-<header>
-  <h1>${escapeHtml(r.title)}</h1>
-  <div class="meta">
-    <span class="badge">${escapeHtml(r.category || 'Sonstiges')}</span>
-    ${r.favorite ? '<span class="badge">★ Favorit</span>' : ''}
-    ${imgs.length ? `<span class="badge">📷 ${imgs.length} ${imgs.length === 1 ? 'Bild' : 'Bilder'}</span>` : ''}
-    ${r.video ? '<span class="badge">🎬 Video</span>' : ''}
-    ${r.updatedAt ? `<div style="margin-top:3mm">Zuletzt geändert: ${formatDate(r.updatedAt)}</div>` : ''}
+  <div class="sheet">
+    <header>
+      <h1>${esc(r.title)}</h1>
+      <div class="meta">
+        ${category}
+        ${favorite}
+        ${imageCount}
+        ${videoBadge}
+        ${updated ? `<span class="updated">Zuletzt geändert: ${esc(updated)}</span>` : ''}
+      </div>
+    </header>
+
+    ${imagesHtml}
+
+    <div class="main-grid">
+      ${ingredients || '<section></section>'}
+      ${instructions || '<section></section>'}
+    </div>
+
+    ${notes}
+    ${infoBlock}
+
+    <footer>
+      <span>Gedruckt aus Andys Rezeptbox</span>
+      <span>V3.13</span>
+    </footer>
   </div>
-</header>
-
-${printableImages ? `<div class="images">${printableImages}</div>` : ''}
-
-<section>
-  <h2>Zutaten</h2>
-  <div class="text">${escapeHtml(r.ingredients || '—')}</div>
-</section>
-
-<section>
-  <h2>Zubereitung</h2>
-  <div class="text">${escapeHtml(r.instructions || '—')}</div>
-</section>
-
-<section>
-  <h2>Eigene Notizen</h2>
-  <div class="text">${escapeHtml(r.notes || '—')}</div>
-</section>
-
-<section>
-  <h2>Video</h2>
-  ${videoInfo}
-</section>
-
-<section>
-  <h2>Original-Link</h2>
-  ${sourceInfo}
-</section>
-
-<footer>
-  Gedruckt aus Andys Rezeptbox · V3.8 · ${new Date().toLocaleDateString('de-CH')}
-</footer>
 
 <script>
-  window.addEventListener('load', () => {
-    setTimeout(() => window.print(), 250);
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      window.print();
+    }, 250);
   });
 <\/script>
 </body>
-</html>`;
-
-  printWindow.document.open();
-  printWindow.document.write(documentHtml);
+</html>`);
   printWindow.document.close();
 }
 
@@ -1721,7 +1836,7 @@ function mergeRecipesFromBackup(incomingRecipes){
 el('exportBtn').onclick = () => {
   const payload = JSON.stringify({
     app:'Andys Rezeptbox',
-    version:3.12,
+    version:3.13,
     exportedAt:new Date().toISOString(),
     recipes,
     customCategories
