@@ -496,6 +496,12 @@ function printRecipe(id){
     ? `<section class="links">${video}${source}</section>`
     : '';
 
+  const hasInstructions = !!r.instructions;
+  const hasIngredients = !!r.ingredients;
+
+  let mainGridClass = 'main-grid';
+  if (!hasInstructions || !hasIngredients) mainGridClass += ' single-column';
+
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
     alert('Das Druckfenster konnte nicht geöffnet werden. Bitte Pop-ups für diese Seite erlauben.');
@@ -515,9 +521,7 @@ function printRecipe(id){
     margin: 10mm 11mm 10mm 11mm;
   }
 
-  * {
-    box-sizing: border-box;
-  }
+  * { box-sizing: border-box; }
 
   html, body {
     margin: 0;
@@ -525,13 +529,11 @@ function printRecipe(id){
     background: #fff;
     color: #20251f;
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 9.4pt;
-    line-height: 1.28;
+    font-size: 10.2pt;
+    line-height: 1.34;
   }
 
-  body {
-    width: 100%;
-  }
+  body { width: 100%; }
 
   .sheet {
     max-width: 188mm;
@@ -540,14 +542,14 @@ function printRecipe(id){
 
   header {
     border-bottom: 1px solid #9ca69b;
-    padding-bottom: 3mm;
-    margin-bottom: 4mm;
+    padding-bottom: 3.5mm;
+    margin-bottom: 5mm;
   }
 
   h1 {
-    font-size: 18pt;
-    line-height: 1.08;
-    margin: 0 0 2mm 0;
+    font-size: 19pt;
+    line-height: 1.12;
+    margin: 0 0 2.5mm 0;
     font-weight: 700;
   }
 
@@ -556,13 +558,13 @@ function printRecipe(id){
     flex-wrap: wrap;
     gap: 2mm;
     align-items: center;
-    font-size: 8.2pt;
+    font-size: 8.5pt;
     color: #4f5a50;
   }
 
   .meta-pill {
     display: inline-block;
-    padding: 1mm 2mm;
+    padding: 1mm 2.2mm;
     border: 1px solid #d8ded7;
     border-radius: 999px;
     background: #f7f8f5;
@@ -577,17 +579,17 @@ function printRecipe(id){
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    gap: 3mm;
+    gap: 4mm;
     flex-wrap: wrap;
-    margin: 0 0 4mm 0;
+    margin: 0 0 5mm 0;
     page-break-inside: avoid;
     break-inside: avoid;
   }
 
   .recipe-image {
     display: block;
-    max-width: 54mm;
-    max-height: 54mm;
+    max-width: 68mm;
+    max-height: 68mm;
     width: auto;
     height: auto;
     object-fit: contain;
@@ -595,60 +597,74 @@ function printRecipe(id){
   }
 
   .images:has(.recipe-image:nth-child(2)) .recipe-image {
-    max-width: 44mm;
-    max-height: 44mm;
+    max-width: 52mm;
+    max-height: 52mm;
+  }
+
+  .images:has(.recipe-image:nth-child(3)) .recipe-image {
+    max-width: 42mm;
+    max-height: 42mm;
   }
 
   .main-grid {
     display: grid;
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.35fr);
-    gap: 4mm;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.35fr);
+    gap: 5mm;
     align-items: start;
     margin-top: 1mm;
+  }
+
+  .main-grid.single-column {
+    grid-template-columns: 1fr;
+    max-width: 112mm;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .box {
     border: 1px solid #d8ded7;
     border-radius: 2.5mm;
-    padding: 3mm;
+    padding: 3.5mm;
     margin: 0;
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
   .box h2 {
-    font-size: 11pt;
-    margin: 0 0 2mm 0;
-    padding-bottom: 1mm;
+    font-size: 11.5pt;
+    margin: 0 0 2.2mm 0;
+    padding-bottom: 1.2mm;
     border-bottom: 1px solid #e4e8e3;
   }
 
   .content {
     white-space: normal;
+    font-size: 10pt;
   }
 
   .notes {
-    margin-top: 4mm;
+    margin-top: 5mm;
   }
 
   .links {
-    margin-top: 3mm;
-    padding-top: 2mm;
+    margin-top: 4mm;
+    padding-top: 2.5mm;
     border-top: 1px solid #d8ded7;
-    font-size: 7.7pt;
+    font-size: 8pt;
     color: #455045;
   }
 
   .small-row {
-    margin: 0.8mm 0;
-    word-break: break-all;
+    margin: 1mm 0;
+    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 
   footer {
-    margin-top: 3mm;
-    padding-top: 2mm;
+    margin-top: 4mm;
+    padding-top: 2.5mm;
     border-top: 1px solid #e4e8e3;
-    font-size: 7pt;
+    font-size: 7.3pt;
     color: #6b746c;
     display: flex;
     justify-content: space-between;
@@ -665,12 +681,12 @@ function printRecipe(id){
     .sheet {
       max-width: none;
     }
-  }
 
-  /* Bei langen Rezepten darf der rechte Textblock umbrechen.
-     Kurze Rezepte bleiben möglichst komplett auf einer Seite. */
-  @media print and (max-width: 210mm) {
-    .instructions {
+    /* Für längere Rezepte dürfen die Textbereiche umbrechen,
+       damit kein unnötiger Seitenwechsel entsteht. */
+    .ingredients,
+    .instructions,
+    .notes {
       break-inside: auto;
       page-break-inside: auto;
     }
@@ -692,9 +708,9 @@ function printRecipe(id){
 
     ${imagesHtml}
 
-    <div class="main-grid">
-      ${ingredients || '<section></section>'}
-      ${instructions || '<section></section>'}
+    <div class="${mainGridClass}">
+      ${ingredients || ''}
+      ${instructions || ''}
     </div>
 
     ${notes}
@@ -702,7 +718,7 @@ function printRecipe(id){
 
     <footer>
       <span>Gedruckt aus Andys Rezeptbox</span>
-      <span>V3.13</span>
+      <span>V3.14</span>
     </footer>
   </div>
 
@@ -1836,7 +1852,7 @@ function mergeRecipesFromBackup(incomingRecipes){
 el('exportBtn').onclick = () => {
   const payload = JSON.stringify({
     app:'Andys Rezeptbox',
-    version:3.13,
+    version:3.14,
     exportedAt:new Date().toISOString(),
     recipes,
     customCategories

@@ -132,3 +132,14 @@ V3.13:
 - Normale Rezepte sollen möglichst auf eine A4-Seite passen.
 - Lange Rezepte dürfen weiterhin auf mehrere Seiten umbrechen.
 - Service-Worker-Cache auf V3.13 aktualisiert.
+
+V3.14:
+- Druckansicht nochmals besser auf A4 abgestimmt.
+- Schrift grösser und besser lesbar.
+- Bilder grösser.
+- Zutaten/Zubereitung luftiger angeordnet.
+- Bei Rezepten ohne Zubereitung wird der Zutatenblock mittig und breiter dargestellt.
+- Lange Texte dürfen innerhalb der Seite besser umbrechen.
+- Original-Link/Video kompakt, aber besser lesbar.
+- Ziel bleibt: normale Rezepte möglichst auf einer A4-Seite.
+- Service-Worker-Cache auf V3.14 aktualisiert.
