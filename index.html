@@ -20,7 +20,7 @@
     <div class="header-buttons">
       <button id="importRecipeBtn" class="secondary main-add-btn">📋 Importieren</button>
       <button id="addRecipeBtn" class="primary main-add-btn">＋ Neues Rezept</button>
-      <span class="app-version" aria-label="Version 3.16">V3.16</span>
+      <span class="app-version" aria-label="Version 3.17">V3.17</span>
     </div>
   </header>
 
@@ -132,9 +132,53 @@
         </div>
       </div>
     </section>
+
+    <section class="sync-card card">
+      <div class="section-head compact-head">
+        <div>
+          <h2>NAS-Synchronisation</h2>
+          <span class="section-sub">Optional für deine eigenen Geräte. Ohne Einrichtung bleibt alles nur lokal gespeichert.</span>
+        </div>
+        <span id="syncStatusBadge" class="sync-badge sync-off">Ausgeschaltet</span>
+      </div>
+      <div class="sync-box">
+        <p id="syncStatusText">Die NAS-Synchronisation ist auf diesem Gerät nicht eingerichtet.</p>
+        <div class="backup-actions">
+          <button id="syncNowBtn" class="secondary" disabled>🔄 Jetzt synchronisieren</button>
+          <button id="syncSettingsBtn" class="secondary">⚙️ Synchronisation einrichten</button>
+        </div>
+      </div>
+    </section>
   </main>
 
   <button id="mobileAddBtn" class="floating-add" aria-label="Neues Rezept anlegen">＋</button>
+
+  <dialog id="syncDialog" class="small-dialog sync-dialog">
+    <form id="syncForm" method="dialog">
+      <div class="dialog-head">
+        <h2>NAS-Synchronisation</h2>
+        <button type="button" id="closeSyncDialogBtn" class="icon-btn" aria-label="Schliessen">✕</button>
+      </div>
+      <label class="sync-toggle">
+        <input id="syncEnabledInput" type="checkbox" />
+        <span>Synchronisation auf diesem Gerät aktivieren</span>
+      </label>
+      <label>NAS-Adresse
+        <input id="syncUrlInput" type="url" placeholder="https://andys-rezeptbox.synology.me:8443" />
+      </label>
+      <label>Persönlicher Synchronisationsschlüssel
+        <input id="syncKeyInput" type="password" autocomplete="off" placeholder="Schlüssel aus der persönlichen Textdatei" />
+      </label>
+      <p class="sync-hint">Adresse und Schlüssel werden nur lokal auf diesem Gerät gespeichert. Andere Nutzer des öffentlichen Links erhalten keinen Zugriff auf deinen NAS.</p>
+      <div id="syncDialogStatus" class="sync-dialog-status" aria-live="polite"></div>
+      <div class="dialog-actions sync-dialog-actions">
+        <button type="button" id="disableSyncBtn" class="danger secondary">Deaktivieren</button>
+        <span class="spacer"></span>
+        <button type="button" id="testSyncBtn" class="secondary">Verbindung testen</button>
+        <button type="submit" class="primary">Speichern</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="categoryDialog" class="small-dialog">
     <form id="categoryForm" method="dialog">

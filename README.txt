@@ -152,6 +152,14 @@ V3.15:
 - Rezepte ohne Zubereitung erhalten einen deutlich breiteren Zutatenblock.
 - Service-Worker-Cache auf V3.15 aktualisiert.
 
+V3.17:
+- Optionale NAS-Synchronisation über eine geschützte HTTPS-API ergänzt.
+- Ohne bewusste Aktivierung arbeitet die Rezeptbox weiterhin vollständig lokal.
+- NAS-Ausfälle und Ruhezustand blockieren das lokale Speichern nicht.
+- Rezepte, Kategorien und Löschungen werden zwischen aktivierten Geräten zusammengeführt.
+- Versionsprüfung schützt vor unbeabsichtigtem Überschreiben bei gleichzeitigen Änderungen.
+- Service-Worker-Cache auf V3.17 aktualisiert.
+
 V3.16:
 - Letzte Feinabstimmung der Druckansicht.
 - Kurze und normale Rezepte bleiben gross und gut lesbar wie in V3.15.

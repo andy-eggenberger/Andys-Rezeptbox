@@ -2,6 +2,9 @@ const STORAGE_KEY = 'andys-rezeptbox-v2-recipes';
 const IDB_DB_NAME = 'andys-rezeptbox-db';
 const IDB_STORE_NAME = 'data';
 const IDB_RECIPES_KEY = 'recipes';
+const SYNC_SETTINGS_KEY = 'andys-rezeptbox-sync-settings-v1';
+const SYNC_DELETIONS_KEY = 'andys-rezeptbox-sync-deletions-v1';
+const DEFAULT_SYNC_URL = 'https://andys-rezeptbox.synology.me:8443';
 
 const DEFAULT_CATEGORIES = [
   ['Salate','🥗'], ['Fleisch','🥩'], ['Fisch','🐟'], ['Suppen','🍲'], ['Beilagen','🥔'],
@@ -26,6 +29,7 @@ function saveCustomCategories(){
       localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(customCategories));
     } catch {}
   }
+  scheduleNasSync();
 }
 function allCategories(){
   return [...DEFAULT_CATEGORIES, ...customCategories];
@@ -38,6 +42,9 @@ let editingImages = [];
 let importImages = [];
 let editingVideo = '';
 let importVideo = '';
+let syncApplyingRemote = false;
+let syncInProgress = false;
+let syncTimer = null;
 
 const el = id => document.getElementById(id);
 const categoryGrid = el('categoryGrid');
@@ -139,6 +146,8 @@ async function initializeRecipeStorage(){
     );
     render();
   }
+  refreshSyncUi();
+  scheduleNasSync(1800);
 }
 
 function saveRecipes(){
@@ -162,7 +171,189 @@ function saveRecipes(){
     );
   });
 
+  scheduleNasSync();
+
   return true;
+}
+
+function loadSyncSettings(){
+  try {
+    const value = JSON.parse(localStorage.getItem(SYNC_SETTINGS_KEY)) || {};
+    return {
+      enabled: value.enabled === true,
+      url: String(value.url || DEFAULT_SYNC_URL).replace(/\/+$/, ''),
+      key: String(value.key || '').trim()
+    };
+  } catch {
+    return {enabled:false, url:DEFAULT_SYNC_URL, key:''};
+  }
+}
+
+function saveSyncSettings(settings){
+  localStorage.setItem(SYNC_SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function loadDeletedRecipes(){
+  try {
+    const value = JSON.parse(localStorage.getItem(SYNC_DELETIONS_KEY));
+    return Array.isArray(value) ? value.filter(item => item && item.id && item.deletedAt) : [];
+  } catch { return []; }
+}
+
+function saveDeletedRecipes(items){
+  localStorage.setItem(SYNC_DELETIONS_KEY, JSON.stringify(items));
+}
+
+function rememberRecipeDeletion(id){
+  if (!id) return;
+  const items = loadDeletedRecipes().filter(item => item.id !== id);
+  items.push({id, deletedAt:new Date().toISOString()});
+  saveDeletedRecipes(items);
+}
+
+function syncTime(value){
+  const time = Date.parse(value || '');
+  return Number.isFinite(time) ? time : 0;
+}
+
+function mergeCategoryLists(localList, remoteList){
+  const merged = [];
+  const names = new Set(DEFAULT_CATEGORIES.map(([name]) => name.toLowerCase()));
+  for (const item of [...(localList || []), ...(remoteList || [])]) {
+    if (!Array.isArray(item) || !String(item[0] || '').trim()) continue;
+    const name = String(item[0]).trim();
+    const key = name.toLowerCase();
+    if (names.has(key)) continue;
+    names.add(key);
+    merged.push([name, item[1] || '🍽️']);
+  }
+  return merged;
+}
+
+function mergeDeletionLists(localList, remoteList){
+  const byId = new Map();
+  for (const item of [...(localList || []), ...(remoteList || [])]) {
+    if (!item?.id || !item?.deletedAt) continue;
+    const previous = byId.get(item.id);
+    if (!previous || syncTime(item.deletedAt) > syncTime(previous.deletedAt)) byId.set(item.id, item);
+  }
+  return [...byId.values()];
+}
+
+function mergeRecipeLists(localList, remoteList, deletions){
+  const byId = new Map();
+  for (const raw of [...(localList || []), ...(remoteList || [])]) {
+    const recipe = normalizeRecipe(raw || {});
+    if (!recipe.id || !recipe.title) continue;
+    const previous = byId.get(recipe.id);
+    if (!previous || syncTime(recipe.updatedAt) >= syncTime(previous.updatedAt)) byId.set(recipe.id, recipe);
+  }
+  const deletedById = new Map((deletions || []).map(item => [item.id, item]));
+  return [...byId.values()].filter(recipe => {
+    const deletion = deletedById.get(recipe.id);
+    return !deletion || syncTime(recipe.updatedAt) > syncTime(deletion.deletedAt);
+  });
+}
+
+function currentSyncPayload(){
+  return {
+    app:'Andys Rezeptbox',
+    version:3.17,
+    exportedAt:new Date().toISOString(),
+    recipes:recipes.map(normalizeRecipe),
+    customCategories,
+    deletedRecipes:loadDeletedRecipes()
+  };
+}
+
+async function syncFetch(action, options={}){
+  const settings = loadSyncSettings();
+  if (!settings.enabled || !settings.url || !settings.key) throw new Error('Synchronisation ist nicht vollständig eingerichtet.');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 35000);
+  try {
+    return await fetch(`${settings.url}/?action=${encodeURIComponent(action)}`, {
+      ...options,
+      cache:'no-store',
+      signal:controller.signal,
+      headers:{
+        'Content-Type':'application/json',
+        'X-Rezeptbox-Key':settings.key,
+        ...(options.headers || {})
+      }
+    });
+  } finally { clearTimeout(timeout); }
+}
+
+function setSyncStatus(kind, text){
+  const badge = el('syncStatusBadge');
+  const status = el('syncStatusText');
+  if (!badge || !status) return;
+  badge.className = `sync-badge sync-${kind}`;
+  badge.textContent = kind === 'ok' ? 'Verbunden' : kind === 'working' ? 'Synchronisiert …' : kind === 'error' ? 'NAS nicht erreichbar' : 'Ausgeschaltet';
+  status.textContent = text;
+}
+
+function refreshSyncUi(){
+  const settings = loadSyncSettings();
+  const button = el('syncNowBtn');
+  if (button) button.disabled = !settings.enabled || !settings.url || !settings.key || syncInProgress;
+  if (!settings.enabled) setSyncStatus('off', 'Die NAS-Synchronisation ist auf diesem Gerät nicht eingerichtet. Deine Rezepte bleiben lokal verfügbar.');
+}
+
+async function applyRemoteSyncData(remoteData){
+  const deletions = mergeDeletionLists(loadDeletedRecipes(), remoteData?.deletedRecipes);
+  recipes = mergeRecipeLists(recipes, remoteData?.recipes, deletions);
+  customCategories = mergeCategoryLists(customCategories, remoteData?.customCategories);
+  saveDeletedRecipes(deletions);
+  syncApplyingRemote = true;
+  try {
+    await idbWrite(IDB_RECIPES_KEY, recipes);
+    localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(customCategories));
+  } finally { syncApplyingRemote = false; }
+  render();
+}
+
+async function performNasSync(manual=false, retry=true){
+  if (syncInProgress) return;
+  const settings = loadSyncSettings();
+  if (!settings.enabled) return;
+  syncInProgress = true;
+  refreshSyncUi();
+  setSyncStatus('working', 'Der NAS wird kontaktiert. Falls er schläft, kann das Aufwachen etwas dauern.');
+  try {
+    const pullResponse = await syncFetch('pull');
+    if (!pullResponse.ok) throw new Error(`Abruf fehlgeschlagen (${pullResponse.status})`);
+    const pulled = await pullResponse.json();
+    if (pulled.exists && pulled.data) await applyRemoteSyncData(pulled.data);
+
+    const pushResponse = await syncFetch('push', {
+      method:'POST',
+      body:JSON.stringify({baseRevision:pulled.revision || null, data:currentSyncPayload()})
+    });
+
+    if (pushResponse.status === 409 && retry) {
+      setTimeout(() => performNasSync(manual, false), 250);
+      return;
+    }
+    if (!pushResponse.ok) throw new Error(`Speichern fehlgeschlagen (${pushResponse.status})`);
+    const result = await pushResponse.json();
+    const when = new Date().toLocaleString('de-CH', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+    setSyncStatus('ok', `${result.recipeCount ?? recipes.length} Rezepte synchronisiert. Letzter Abgleich: ${when}.`);
+  } catch (error) {
+    console.warn('NAS-Synchronisation nicht möglich:', error);
+    setSyncStatus('error', 'Der NAS ist momentan nicht erreichbar. Lokal kannst du normal weiterarbeiten; der nächste Abgleich wird automatisch versucht.');
+    if (manual) el('syncDialogStatus').textContent = 'Verbindung momentan nicht möglich. Prüfe NAS-Adresse, Schlüssel und Internetverbindung.';
+  } finally {
+    syncInProgress = false;
+    refreshSyncUi();
+  }
+}
+
+function scheduleNasSync(delay=3000){
+  if (syncApplyingRemote || !loadSyncSettings().enabled) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => performNasSync(false), delay);
 }
 
 function uid(){ return (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(16).slice(2)); }
@@ -789,7 +980,7 @@ function printRecipe(id){
 
     <footer>
       <span>Gedruckt aus Andys Rezeptbox</span>
-      <span>V3.16</span>
+      <span>V3.17</span>
     </footer>
   </div>
 
@@ -1571,7 +1762,13 @@ el('removeImageBtn').onclick = () => {
 el('deleteBtn').onclick = () => {
   const id = el('recipeId').value;
   const r = recipes.find(x => x.id === id);
-  if (r && confirm(`„${r.title}“ wirklich löschen?`)) { recipes = recipes.filter(x => x.id !== id); saveRecipes(); recipeDialog.close(); render(); }
+  if (r && confirm(`„${r.title}“ wirklich löschen?`)) {
+    rememberRecipeDeletion(id);
+    recipes = recipes.filter(x => x.id !== id);
+    saveRecipes();
+    recipeDialog.close();
+    render();
+  }
 };
 
 el('importImagesInput').addEventListener('change', async e => {
@@ -1923,10 +2120,11 @@ function mergeRecipesFromBackup(incomingRecipes){
 el('exportBtn').onclick = () => {
   const payload = JSON.stringify({
     app:'Andys Rezeptbox',
-    version:3.16,
+    version:3.17,
     exportedAt:new Date().toISOString(),
     recipes,
-    customCategories
+    customCategories,
+    deletedRecipes:loadDeletedRecipes()
   }, null, 2);
   const blob = new Blob([payload], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -1995,6 +2193,7 @@ el('importInput').addEventListener('change', async e => {
       const cleaned = dedupeRecipeList(data.recipes);
       recipes = cleaned.recipes;
       customCategories = Array.isArray(data.customCategories) ? data.customCategories : [];
+      saveDeletedRecipes(Array.isArray(data.deletedRecipes) ? data.deletedRecipes : []);
       if (!saveRecipes()) {
         alert('Die Sicherung konnte wegen zu wenig Browser-Speicher nicht vollständig wiederhergestellt werden.');
         e.target.value = '';
@@ -2017,6 +2216,72 @@ window.addEventListener('load', () => {
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
   updateStats();
 });
+
+el('syncSettingsBtn').onclick = () => {
+  const settings = loadSyncSettings();
+  el('syncEnabledInput').checked = settings.enabled;
+  el('syncUrlInput').value = settings.url || DEFAULT_SYNC_URL;
+  el('syncKeyInput').value = settings.key || '';
+  el('syncDialogStatus').textContent = '';
+  el('syncDialog').showModal();
+};
+
+el('closeSyncDialogBtn').onclick = () => el('syncDialog').close();
+el('syncNowBtn').onclick = () => performNasSync(true);
+
+el('testSyncBtn').onclick = async () => {
+  const temporary = {
+    enabled:true,
+    url:el('syncUrlInput').value.trim().replace(/\/+$/, ''),
+    key:el('syncKeyInput').value.trim()
+  };
+  if (!temporary.url || !temporary.key) {
+    el('syncDialogStatus').textContent = 'Bitte NAS-Adresse und Synchronisationsschlüssel eintragen.';
+    return;
+  }
+  const previous = loadSyncSettings();
+  saveSyncSettings(temporary);
+  el('syncDialogStatus').textContent = 'Verbindung wird geprüft …';
+  try {
+    const response = await syncFetch('status');
+    if (!response.ok) throw new Error(String(response.status));
+    const result = await response.json();
+    el('syncDialogStatus').textContent = result.ok ? '✓ Verbindung und Schlüssel sind gültig.' : 'Verbindung konnte nicht bestätigt werden.';
+  } catch {
+    el('syncDialogStatus').textContent = 'Keine Verbindung. Prüfe Adresse, Schlüssel und ob der NAS erreichbar ist.';
+  } finally {
+    saveSyncSettings(previous);
+  }
+};
+
+el('syncForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const settings = {
+    enabled:el('syncEnabledInput').checked,
+    url:el('syncUrlInput').value.trim().replace(/\/+$/, ''),
+    key:el('syncKeyInput').value.trim()
+  };
+  if (settings.enabled && (!settings.url || !settings.key)) {
+    el('syncDialogStatus').textContent = 'Für die Aktivierung werden NAS-Adresse und Schlüssel benötigt.';
+    return;
+  }
+  saveSyncSettings(settings);
+  el('syncDialog').close();
+  refreshSyncUi();
+  if (settings.enabled) performNasSync(true);
+});
+
+el('disableSyncBtn').onclick = () => {
+  saveSyncSettings({enabled:false, url:DEFAULT_SYNC_URL, key:''});
+  el('syncDialog').close();
+  refreshSyncUi();
+};
+
+window.addEventListener('online', () => scheduleNasSync(1200));
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') scheduleNasSync(1500);
+});
+setInterval(() => scheduleNasSync(0), 5 * 60 * 1000);
 
 render();
 initializeRecipeStorage();
