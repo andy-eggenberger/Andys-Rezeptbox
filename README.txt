@@ -177,8 +177,11 @@ V3.18:
 - Bestehende Rezepte, Kategorien und Favoriten bleiben unverändert.
 - Favoriten bleiben ein eigener Filter und werden nicht als Kategorie einsortiert.
 
-V3.19:
-- Selbst erstellte Kategorien können sicher gelöscht werden.
-- Löschen ist nur möglich, wenn kein Rezept mehr dieser Kategorie zugeordnet ist.
-- Standardkategorien bleiben geschützt und können nicht gelöscht werden.
+
+V3.20:
+- Fehler aus V3.19 korrigiert: Kategorien werden wieder normal angezeigt.
+- Selbst erstellte Kategorien erhalten einen kleinen Papierkorb.
+- Standardkategorien können nicht gelöscht werden.
+- Eine Kategorie kann nur gelöscht werden, wenn ihr kein Rezept mehr zugeordnet ist.
 - Vor dem Löschen erscheint eine Sicherheitsabfrage.
+- Alphabetische Sortierung und erweiterte Symbolauswahl aus V3.18 bleiben erhalten.

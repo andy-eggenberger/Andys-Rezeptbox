@@ -28,7 +28,6 @@ function normalizeCategoryIcon(selectedIcon){
 }
 
 
-
 function isCustomCategory(categoryName){
   const name = String(categoryName || '').trim();
   return customCategories.some(c => {
@@ -41,27 +40,27 @@ function deleteCustomCategory(categoryName){
   const name = String(categoryName || '').trim();
   if (!name) return;
 
-  const inUse = recipes.some(r => String(r.category || '').trim() === name);
-  if (inUse) {
-    alert('Diese Kategorie kann nicht gelöscht werden, weil noch mindestens ein Rezept darin gespeichert ist. Verschiebe zuerst alle Rezepte in eine andere Kategorie.');
+  if (!isCustomCategory(name)) {
+    alert('Standardkategorien können nicht gelöscht werden.');
     return;
   }
 
-  const idx = customCategories.findIndex(c => {
-    const n = Array.isArray(c) ? c[0] : (typeof c === 'string' ? c : c?.name);
-    return String(n || '').trim() === name;
-  });
-
-  if (idx < 0) {
-    alert('Nur selbst erstellte Kategorien können gelöscht werden.');
+  const inUse = recipes.some(r => String(r.category || '').trim() === name);
+  if (inUse) {
+    alert('Diese Kategorie kann noch nicht gelöscht werden, weil ihr noch mindestens ein Rezept zugeordnet ist. Verschiebe zuerst alle Rezepte in eine andere Kategorie.');
     return;
   }
 
   if (!confirm('Kategorie "' + name + '" wirklich löschen?')) return;
 
-  customCategories.splice(idx, 1);
+  customCategories = customCategories.filter(c => {
+    const n = Array.isArray(c) ? c[0] : (typeof c === 'string' ? c : c?.name);
+    return String(n || '').trim() !== name;
+  });
+
+  if (currentCategory === name) currentCategory = null;
   saveCustomCategories();
-  renderAll();
+  render();
 }
 
 function sortCategoriesAlphabetically(list){
@@ -317,7 +316,7 @@ function mergeRecipeLists(localList, remoteList, deletions){
 function currentSyncPayload(){
   return {
     app:'Andys Rezeptbox',
-    version: 3.19,
+    version: 3.20,
     exportedAt:new Date().toISOString(),
     recipes:recipes.map(normalizeRecipe),
     customCategories,
@@ -441,19 +440,36 @@ function updateStats(){
 }
 
 function renderCategories(){
-  categoryGrid.innerHTML = allCategories().map(([name,emoji]) => `
-    <button class="category ${currentCategory===name?'active':''}" data-category="${name}">
-      <div class="category-top">
-        <span class="emoji">${emoji}</span>
-        <small>${categoryCount(name)} ${categoryCount(name) === 1 ? 'Rezept' : 'Rezepte'}</small>
-      ${isCustomCategory(catName ?? name ?? categoryName ?? cat?.[0] ?? cat) ? `<button type="button" class="category-delete-btn" title="Kategorie löschen" aria-label="Kategorie löschen" onclick="event.stopPropagation(); deleteCustomCategory(${JSON.stringify(catName ?? name ?? categoryName ?? cat?.[0] ?? cat)})">🗑️</button>` : ''}</div>
-      <strong>${name}</strong>
-    </button>`).join('');
+  categoryGrid.innerHTML = allCategories().map(([name,emoji]) => {
+    const deleteButton = isCustomCategory(name)
+      ? `<button type="button" class="category-delete-btn" data-delete-category="${name}" title="Kategorie löschen" aria-label="Kategorie ${name} löschen">🗑️</button>`
+      : '';
+
+    return `
+      <div class="category-wrap">
+        <button class="category ${currentCategory===name?'active':''}" data-category="${name}">
+          <div class="category-top">
+            <span class="emoji">${emoji}</span>
+            <small>${categoryCount(name)} ${categoryCount(name) === 1 ? 'Rezept' : 'Rezepte'}</small>
+          </div>
+          <strong>${name}</strong>
+        </button>
+        ${deleteButton}
+      </div>`;
+  }).join('');
+
   categoryGrid.querySelectorAll('.category').forEach(btn => btn.addEventListener('click', () => {
     currentCategory = currentCategory === btn.dataset.category ? null : btn.dataset.category;
     favoritesOnly = false;
     render();
   }));
+
+  categoryGrid.querySelectorAll('.category-delete-btn').forEach(btn => btn.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    deleteCustomCategory(btn.dataset.deleteCategory);
+  }));
+
   el('categoryInput').innerHTML = allCategories().map(([name]) => `<option>${name}</option>`).join('');
 }
 
@@ -1043,7 +1059,7 @@ function printRecipe(id){
 
     <footer>
       <span>Gedruckt aus Andys Rezeptbox</span>
-      <span>V3.19</span>
+      <span>V3.20</span>
     </footer>
   </div>
 
@@ -2184,7 +2200,7 @@ function mergeRecipesFromBackup(incomingRecipes){
 el('exportBtn').onclick = () => {
   const payload = JSON.stringify({
     app:'Andys Rezeptbox',
-    version: 3.19,
+    version: 3.20,
     exportedAt:new Date().toISOString(),
     recipes,
     customCategories,
