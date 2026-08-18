@@ -176,3 +176,9 @@ V3.18:
 - Zusätzlich kann bei einer neuen Kategorie ein eigenes Emoji verwendet werden.
 - Bestehende Rezepte, Kategorien und Favoriten bleiben unverändert.
 - Favoriten bleiben ein eigener Filter und werden nicht als Kategorie einsortiert.
+
+V3.19:
+- Selbst erstellte Kategorien können sicher gelöscht werden.
+- Löschen ist nur möglich, wenn kein Rezept mehr dieser Kategorie zugeordnet ist.
+- Standardkategorien bleiben geschützt und können nicht gelöscht werden.
+- Vor dem Löschen erscheint eine Sicherheitsabfrage.

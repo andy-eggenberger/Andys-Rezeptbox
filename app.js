@@ -27,6 +27,43 @@ function normalizeCategoryIcon(selectedIcon){
   return custom || selectedIcon || '🍽️';
 }
 
+
+
+function isCustomCategory(categoryName){
+  const name = String(categoryName || '').trim();
+  return customCategories.some(c => {
+    const n = Array.isArray(c) ? c[0] : (typeof c === 'string' ? c : c?.name);
+    return String(n || '').trim() === name;
+  });
+}
+
+function deleteCustomCategory(categoryName){
+  const name = String(categoryName || '').trim();
+  if (!name) return;
+
+  const inUse = recipes.some(r => String(r.category || '').trim() === name);
+  if (inUse) {
+    alert('Diese Kategorie kann nicht gelöscht werden, weil noch mindestens ein Rezept darin gespeichert ist. Verschiebe zuerst alle Rezepte in eine andere Kategorie.');
+    return;
+  }
+
+  const idx = customCategories.findIndex(c => {
+    const n = Array.isArray(c) ? c[0] : (typeof c === 'string' ? c : c?.name);
+    return String(n || '').trim() === name;
+  });
+
+  if (idx < 0) {
+    alert('Nur selbst erstellte Kategorien können gelöscht werden.');
+    return;
+  }
+
+  if (!confirm('Kategorie "' + name + '" wirklich löschen?')) return;
+
+  customCategories.splice(idx, 1);
+  saveCustomCategories();
+  renderAll();
+}
+
 function sortCategoriesAlphabetically(list){
   return [...(list || [])].sort((a, b) => {
     const an = Array.isArray(a) ? (a[0] || '') : (typeof a === 'string' ? a : (a?.name || ''));
@@ -280,7 +317,7 @@ function mergeRecipeLists(localList, remoteList, deletions){
 function currentSyncPayload(){
   return {
     app:'Andys Rezeptbox',
-    version: 3.18,
+    version: 3.19,
     exportedAt:new Date().toISOString(),
     recipes:recipes.map(normalizeRecipe),
     customCategories,
@@ -409,7 +446,7 @@ function renderCategories(){
       <div class="category-top">
         <span class="emoji">${emoji}</span>
         <small>${categoryCount(name)} ${categoryCount(name) === 1 ? 'Rezept' : 'Rezepte'}</small>
-      </div>
+      ${isCustomCategory(catName ?? name ?? categoryName ?? cat?.[0] ?? cat) ? `<button type="button" class="category-delete-btn" title="Kategorie löschen" aria-label="Kategorie löschen" onclick="event.stopPropagation(); deleteCustomCategory(${JSON.stringify(catName ?? name ?? categoryName ?? cat?.[0] ?? cat)})">🗑️</button>` : ''}</div>
       <strong>${name}</strong>
     </button>`).join('');
   categoryGrid.querySelectorAll('.category').forEach(btn => btn.addEventListener('click', () => {
@@ -1006,7 +1043,7 @@ function printRecipe(id){
 
     <footer>
       <span>Gedruckt aus Andys Rezeptbox</span>
-      <span>V3.18</span>
+      <span>V3.19</span>
     </footer>
   </div>
 
@@ -2147,7 +2184,7 @@ function mergeRecipesFromBackup(incomingRecipes){
 el('exportBtn').onclick = () => {
   const payload = JSON.stringify({
     app:'Andys Rezeptbox',
-    version: 3.18,
+    version: 3.19,
     exportedAt:new Date().toISOString(),
     recipes,
     customCategories,

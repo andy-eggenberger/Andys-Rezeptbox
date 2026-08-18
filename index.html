@@ -9,6 +9,26 @@
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
   <link rel="stylesheet" href="styles.css" />
+
+<style id="v319-category-delete-style">
+.category-delete-btn{
+  position:absolute;
+  top:10px;
+  right:10px;
+  width:30px;
+  height:30px;
+  border:none;
+  border-radius:10px;
+  background:rgba(255,255,255,.88);
+  cursor:pointer;
+  font-size:16px;
+  line-height:1;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);
+}
+.category-delete-btn:hover{ transform:scale(1.06); }
+.category-card,.category-tile,[data-category]{ position:relative; }
+</style>
+
 </head>
 <body>
   <header class="app-header">
@@ -20,7 +40,7 @@
     <div class="header-buttons">
       <button id="importRecipeBtn" class="secondary main-add-btn">📋 Importieren</button>
       <button id="addRecipeBtn" class="primary main-add-btn">＋ Neues Rezept</button>
-      <span class="app-version" aria-label="Version 3.18">V3.18</span>
+      <span class="app-version" aria-label="Version 3.19">V3.19</span>
     </div>
   </header>
 
