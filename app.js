@@ -4,6 +4,7 @@ const IDB_STORE_NAME = 'data';
 const IDB_RECIPES_KEY = 'recipes';
 const SYNC_SETTINGS_KEY = 'andys-rezeptbox-sync-settings-v1';
 const SYNC_DELETIONS_KEY = 'andys-rezeptbox-sync-deletions-v1';
+const SYNC_CATEGORY_DELETIONS_KEY = 'andys-rezeptbox-sync-category-deletions-v1';
 const DEFAULT_SYNC_URL = 'https://andys-rezeptbox.synology.me:8443';
 
 const DEFAULT_CATEGORIES = [
@@ -58,6 +59,7 @@ function deleteCustomCategory(categoryName){
     return String(n || '').trim() !== name;
   });
 
+  rememberCategoryDeletion(name);
   if (currentCategory === name) currentCategory = null;
   saveCustomCategories();
   render();
@@ -251,6 +253,39 @@ function saveSyncSettings(settings){
   localStorage.setItem(SYNC_SETTINGS_KEY, JSON.stringify(settings));
 }
 
+
+function loadDeletedCategories(){
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SYNC_CATEGORY_DELETIONS_KEY));
+    return Array.isArray(parsed) ? parsed.filter(item => item?.name && item?.deletedAt) : [];
+  } catch { return []; }
+}
+
+function saveDeletedCategories(items){
+  localStorage.setItem(SYNC_CATEGORY_DELETIONS_KEY, JSON.stringify(items || []));
+}
+
+function rememberCategoryDeletion(name){
+  const clean = String(name || '').trim();
+  if (!clean) return;
+  const items = loadDeletedCategories().filter(item => String(item.name || '').toLowerCase() !== clean.toLowerCase());
+  items.push({name: clean, deletedAt: new Date().toISOString()});
+  saveDeletedCategories(items);
+}
+
+function mergeCategoryDeletionLists(localList, remoteList){
+  const byName = new Map();
+  for (const item of [...(localList || []), ...(remoteList || [])]) {
+    if (!item?.name || !item?.deletedAt) continue;
+    const key = String(item.name).trim().toLowerCase();
+    const previous = byName.get(key);
+    if (!previous || syncTime(item.deletedAt) > syncTime(previous.deletedAt)) {
+      byName.set(key, {name:String(item.name).trim(), deletedAt:item.deletedAt});
+    }
+  }
+  return [...byName.values()];
+}
+
 function loadDeletedRecipes(){
   try {
     const value = JSON.parse(localStorage.getItem(SYNC_DELETIONS_KEY));
@@ -274,14 +309,16 @@ function syncTime(value){
   return Number.isFinite(time) ? time : 0;
 }
 
-function mergeCategoryLists(localList, remoteList){
+function mergeCategoryLists(localList, remoteList, deletedCategories=[]){
   const merged = [];
   const names = new Set(DEFAULT_CATEGORIES.map(([name]) => name.toLowerCase()));
+  const deleted = new Set((deletedCategories || []).map(item => String(item?.name || '').trim().toLowerCase()).filter(Boolean));
+
   for (const item of [...(localList || []), ...(remoteList || [])]) {
     if (!Array.isArray(item) || !String(item[0] || '').trim()) continue;
     const name = String(item[0]).trim();
     const key = name.toLowerCase();
-    if (names.has(key)) continue;
+    if (names.has(key) || deleted.has(key)) continue;
     names.add(key);
     merged.push([name, item[1] || '🍽️']);
   }
@@ -316,11 +353,12 @@ function mergeRecipeLists(localList, remoteList, deletions){
 function currentSyncPayload(){
   return {
     app:'Andys Rezeptbox',
-    version: 3.20,
+    version: 3.21,
     exportedAt:new Date().toISOString(),
     recipes:recipes.map(normalizeRecipe),
     customCategories,
-    deletedRecipes:loadDeletedRecipes()
+    deletedRecipes:loadDeletedRecipes(),
+    deletedCategories:loadDeletedCategories()
   };
 }
 
@@ -365,9 +403,11 @@ function refreshSyncUi(){
 
 async function applyRemoteSyncData(remoteData){
   const deletions = mergeDeletionLists(loadDeletedRecipes(), remoteData?.deletedRecipes);
+  const categoryDeletions = mergeCategoryDeletionLists(loadDeletedCategories(), remoteData?.deletedCategories);
   recipes = mergeRecipeLists(recipes, remoteData?.recipes, deletions);
-  customCategories = mergeCategoryLists(customCategories, remoteData?.customCategories);
+  customCategories = mergeCategoryLists(customCategories, remoteData?.customCategories, categoryDeletions);
   saveDeletedRecipes(deletions);
+  saveDeletedCategories(categoryDeletions);
   syncApplyingRemote = true;
   try {
     await idbWrite(IDB_RECIPES_KEY, recipes);
@@ -1059,7 +1099,7 @@ function printRecipe(id){
 
     <footer>
       <span>Gedruckt aus Andys Rezeptbox</span>
-      <span>V3.20</span>
+      <span>V3.21</span>
     </footer>
   </div>
 
@@ -1690,6 +1730,7 @@ el('categoryForm').addEventListener('submit', e => {
   }
 
   customCategories.push([name, emoji]);
+  saveDeletedCategories(loadDeletedCategories().filter(item => String(item.name || '').trim().toLowerCase() !== name.toLowerCase()));
   saveCustomCategories();
   categoryDialog.close();
   render();
@@ -2200,11 +2241,12 @@ function mergeRecipesFromBackup(incomingRecipes){
 el('exportBtn').onclick = () => {
   const payload = JSON.stringify({
     app:'Andys Rezeptbox',
-    version: 3.20,
+    version: 3.21,
     exportedAt:new Date().toISOString(),
     recipes,
     customCategories,
-    deletedRecipes:loadDeletedRecipes()
+    deletedRecipes:loadDeletedRecipes(),
+    deletedCategories:loadDeletedCategories()
   }, null, 2);
   const blob = new Blob([payload], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -2273,6 +2315,7 @@ el('importInput').addEventListener('change', async e => {
       const cleaned = dedupeRecipeList(data.recipes);
       recipes = cleaned.recipes;
       customCategories = Array.isArray(data.customCategories) ? data.customCategories : [];
+      if (Array.isArray(data.deletedCategories)) saveDeletedCategories(data.deletedCategories);
       saveDeletedRecipes(Array.isArray(data.deletedRecipes) ? data.deletedRecipes : []);
       if (!saveRecipes()) {
         alert('Die Sicherung konnte wegen zu wenig Browser-Speicher nicht vollständig wiederhergestellt werden.');

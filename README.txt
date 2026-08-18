@@ -185,3 +185,10 @@ V3.20:
 - Eine Kategorie kann nur gelöscht werden, wenn ihr kein Rezept mehr zugeordnet ist.
 - Vor dem Löschen erscheint eine Sicherheitsabfrage.
 - Alphabetische Sortierung und erweiterte Symbolauswahl aus V3.18 bleiben erhalten.
+
+
+V3.21:
+- Fehler behoben: gelöschte benutzerdefinierte Kategorien werden durch die NAS-Synchronisation nicht mehr zurückgeholt.
+- Kategorie-Löschungen werden wie Rezept-Löschungen als Löschvermerk synchronisiert.
+- Alte Backups/Sync-Daten ohne Kategorie-Löschvermerke bleiben kompatibel.
+- Wird eine gelöschte Kategorie später bewusst neu erstellt, wird der alte Löschvermerk entfernt.
