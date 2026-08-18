@@ -167,3 +167,12 @@ V3.16:
 - Ziel: lange Rezepte möglichst auf einer A4-Seite bei 100 % Druck-Skalierung.
 - Bilder, Abstände, Schrift und Links werden nur bei langen Rezepten reduziert.
 - Service-Worker-Cache auf V3.16 aktualisiert.
+
+
+V3.18:
+- Kategorien werden in der Oberfläche alphabetisch nach deutschem/Schweizer Sortierverhalten angezeigt.
+- Neue Kategorien erscheinen automatisch an der passenden alphabetischen Stelle.
+- Deutlich erweiterte Symbol-/Emoji-Auswahl für Kategorien.
+- Zusätzlich kann bei einer neuen Kategorie ein eigenes Emoji verwendet werden.
+- Bestehende Rezepte, Kategorien und Favoriten bleiben unverändert.
+- Favoriten bleiben ein eigener Filter und werden nicht als Kategorie einsortiert.

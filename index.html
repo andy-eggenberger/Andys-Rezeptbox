@@ -20,7 +20,7 @@
     <div class="header-buttons">
       <button id="importRecipeBtn" class="secondary main-add-btn">📋 Importieren</button>
       <button id="addRecipeBtn" class="primary main-add-btn">＋ Neues Rezept</button>
-      <span class="app-version" aria-label="Version 3.17">V3.17</span>
+      <span class="app-version" aria-label="Version 3.18">V3.18</span>
     </div>
   </header>
 
@@ -194,15 +194,81 @@
       <label>Symbol
         <select id="newCategoryEmoji">
           <option value="🍽️">🍽️ Allgemein</option>
+          <option value="🥗">🥗 Salat</option>
+          <option value="🍲">🍲 Suppe</option>
+          <option value="🥣">🥣 Bowl / Brei</option>
           <option value="🍝">🍝 Pasta</option>
           <option value="🍕">🍕 Pizza</option>
-          <option value="🥘">🥘 Eintopf</option>
-          <option value="🥪">🥪 Snack</option>
+          <option value="🥪">🥪 Sandwich / Snack</option>
+          <option value="🌯">🌯 Wrap</option>
+          <option value="🌮">🌮 Taco</option>
+          <option value="🍔">🍔 Burger</option>
+          <option value="🥩">🥩 Fleisch</option>
+          <option value="🍗">🍗 Geflügel</option>
+          <option value="🐟">🐟 Fisch</option>
+          <option value="🦐">🦐 Meeresfrüchte</option>
+          <option value="🥚">🥚 Eier</option>
+          <option value="🧀">🧀 Käse</option>
           <option value="🥦">🥦 Gemüse</option>
+          <option value="🥕">🥕 Rüebli / Gemüse</option>
+          <option value="🍅">🍅 Tomaten</option>
+          <option value="🥔">🥔 Kartoffeln</option>
+          <option value="🍄">🍄 Pilze</option>
+          <option value="🌿">🌿 Kräuter</option>
+          <option value="🥬">🥬 Vegetarisch / Grün</option>
+          <option value="🫘">🫘 Hülsenfrüchte</option>
+          <option value="🍞">🍞 Brot</option>
+          <option value="🥖">🥖 Baguette</option>
+          <option value="🥨">🥨 Gebäck</option>
+          <option value="🥐">🥐 Frühstück</option>
+          <option value="🥞">🥞 Pancakes</option>
+          <option value="🧇">🧇 Waffeln</option>
+          <option value="🍚">🍚 Reis</option>
+          <option value="🍛">🍛 Curry</option>
+          <option value="🥘">🥘 Auflauf / Eintopf</option>
+          <option value="🍜">🍜 Nudelsuppe</option>
+          <option value="🍱">🍱 Lunchbox</option>
+          <option value="🍣">🍣 Sushi</option>
+          <option value="🥟">🥟 Teigtaschen</option>
+          <option value="🍤">🍤 Frittiert</option>
+          <option value="🍰">🍰 Dessert / Kuchen</option>
+          <option value="🎂">🎂 Torte</option>
+          <option value="🧁">🧁 Cupcake</option>
+          <option value="🍪">🍪 Guetzli</option>
+          <option value="🍩">🍩 Süssgebäck</option>
+          <option value="🍫">🍫 Schokolade</option>
+          <option value="🍮">🍮 Pudding</option>
+          <option value="🍨">🍨 Glace</option>
+          <option value="🥧">🥧 Wähe / Pie</option>
+          <option value="🍓">🍓 Beeren</option>
+          <option value="🍎">🍎 Früchte</option>
+          <option value="🍋">🍋 Zitrus</option>
+          <option value="🍍">🍍 Exotische Früchte</option>
+          <option value="☕">☕ Kaffee</option>
+          <option value="🍵">🍵 Tee</option>
+          <option value="🥤">🥤 Getränke</option>
+          <option value="🧃">🧃 Saft</option>
+          <option value="🍹">🍹 Cocktail</option>
+          <option value="🍷">🍷 Wein</option>
+          <option value="🥂">🥂 Apéro</option>
+          <option value="🧊">🧊 Kalt / Erfrischend</option>
           <option value="🔥">🔥 Grill</option>
+          <option value="♨️">♨️ Warmhalten</option>
           <option value="🎄">🎄 Weihnachten</option>
+          <option value="🎉">🎉 Fest / Party</option>
           <option value="⭐">⭐ Spezial</option>
+          <option value="❤️">❤️ Lieblingsidee</option>
+          <option value="👶">👶 Kinder</option>
+          <option value="🌱">🌱 Leicht / Vegan</option>
+          <option value="🧺">🧺 Picknick</option>
+          <option value="🍴">🍴 Menü</option>
+          <option value="👨‍🍳">👨‍🍳 Chef / Eigenkreation</option>
         </select>
+      </label>
+
+      <label>Eigenes Emoji <span style="font-weight:normal">(optional)</span>
+        <input id="categoryCustomEmoji" maxlength="4" placeholder="z. B. 🥘" />
+        <small>Wenn du hier ein Emoji eingibst, wird dieses anstelle des ausgewählten Symbols verwendet.</small>
       </label>
 
       <div class="dialog-actions">

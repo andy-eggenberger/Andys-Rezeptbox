@@ -14,6 +14,28 @@ const CATEGORY_STORAGE_KEY = 'andys-rezeptbox-v2-categories';
 
 let customCategories = loadCustomCategories();
 
+
+const CATEGORY_ICON_LIBRARY = ["🍽️", "🥗", "🍲", "🥣", "🍝", "🍕", "🥪", "🌯", "🌮", "🍔", "🌭", "🥩", "🍗", "🍖", "🥓", "🐟", "🦐", "🦞", "🦑", "🥚", "🧀", "🥛", "🥦", "🥕", "🍅", "🥔", "🌽", "🍆", "🥒", "🫑", "🫘", "🍄", "🌿", "🥬", "🍞", "🥖", "🥨", "🥐", "🧇", "🥞", "🍚", "🍛", "🥘", "🍜", "🍱", "🍣", "🥟", "🍤", "🍰", "🎂", "🧁", "🍪", "🍩", "🍫", "🍮", "🍨", "🍦", "🥧", "🍓", "🍎", "🍋", "🍊", "🍇", "🍒", "🍑", "🍍", "🥭", "🥝", "☕", "🍵", "🫖", "🥤", "🧃", "🍹", "🍷", "🍺", "🥂", "🧊", "🔥", "♨️", "🎄", "🎉", "⭐", "❤️", "👶", "🌱", "🥬", "🧺", "🍴", "👨‍🍳"];
+
+function getCustomCategoryEmoji(){
+  const el = document.getElementById('categoryCustomEmoji');
+  return el ? el.value.trim() : '';
+}
+
+function normalizeCategoryIcon(selectedIcon){
+  const custom = getCustomCategoryEmoji();
+  return custom || selectedIcon || '🍽️';
+}
+
+function sortCategoriesAlphabetically(list){
+  return [...(list || [])].sort((a, b) => {
+    const an = Array.isArray(a) ? (a[0] || '') : (typeof a === 'string' ? a : (a?.name || ''));
+    const bn = Array.isArray(b) ? (b[0] || '') : (typeof b === 'string' ? b : (b?.name || ''));
+    return an.localeCompare(bn, 'de-CH', { sensitivity: 'base' });
+  });
+}
+
+
 function loadCustomCategories(){
   try { return JSON.parse(localStorage.getItem(CATEGORY_STORAGE_KEY)) || []; }
   catch { return []; }
@@ -32,7 +54,7 @@ function saveCustomCategories(){
   scheduleNasSync();
 }
 function allCategories(){
-  return [...DEFAULT_CATEGORIES, ...customCategories];
+  return sortCategoriesAlphabetically([...DEFAULT_CATEGORIES, ...customCategories]);
 }
 
 let recipes = loadLegacyRecipes().map(normalizeRecipe);
@@ -258,7 +280,7 @@ function mergeRecipeLists(localList, remoteList, deletions){
 function currentSyncPayload(){
   return {
     app:'Andys Rezeptbox',
-    version:3.17,
+    version: 3.18,
     exportedAt:new Date().toISOString(),
     recipes:recipes.map(normalizeRecipe),
     customCategories,
@@ -984,7 +1006,7 @@ function printRecipe(id){
 
     <footer>
       <span>Gedruckt aus Andys Rezeptbox</span>
-      <span>V3.17</span>
+      <span>V3.18</span>
     </footer>
   </div>
 
@@ -1591,6 +1613,7 @@ async function addImportFiles(files){
 
 function openCategoryDialog(){
   el('categoryForm').reset();
+  if (el('categoryCustomEmoji')) el('categoryCustomEmoji').value = '';
   categoryDialog.showModal();
   setTimeout(() => el('newCategoryInput').focus(), 50);
 }
@@ -1603,7 +1626,7 @@ el('categoryForm').addEventListener('submit', e => {
   e.preventDefault();
 
   const name = el('newCategoryInput').value.trim();
-  const emoji = el('newCategoryEmoji').value || '🍽️';
+  const emoji = (el('categoryCustomEmoji')?.value || '').trim() || el('newCategoryEmoji').value || '🍽️';
 
   if (!name) return;
 
@@ -2124,7 +2147,7 @@ function mergeRecipesFromBackup(incomingRecipes){
 el('exportBtn').onclick = () => {
   const payload = JSON.stringify({
     app:'Andys Rezeptbox',
-    version:3.17,
+    version: 3.18,
     exportedAt:new Date().toISOString(),
     recipes,
     customCategories,
